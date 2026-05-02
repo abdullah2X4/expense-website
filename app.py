@@ -1,36 +1,41 @@
 from flask import Flask, render_template, request, redirect
-import datetime
+import json
+import os
 
 app = Flask(__name__)
-expenses = []
+DATA_FILE = 'expenses.json'
 
-@app.route("/")
-def home():
-    total = sum([expense[1] for expense in expenses])
-    return render_template("index.html", expenses=expenses, total=total)
+def load_expenses():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
 
-@app.route("/add", methods=["POST"])
-def add_expense():
-    name = request.form["name"]
-    amount_text = request.form["amount"]
+def save_expenses(expenses):
+    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(expenses, f, ensure_ascii=False, indent=2)
 
-    # Check type + تحويل الأنواع + Try/Except
-    print(f"Type before: {type(amount_text)}")
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        name = request.form['name']
+        amount = float(request.form['amount'])
+        expenses = load_expenses()
+        expenses.append({'name': name, 'amount': amount})
+        save_expenses(expenses)
+        return redirect('/')
+    
+    expenses = load_expenses()
+    total = sum(item['amount'] for item in expenses)
+    return render_template('index.html', expenses=expenses, total=total)
 
-    try:
-        amount = float(amount_text)
-        print(f"Type after: {type(amount)}")
-    except:
-        print("Error: Not a number")
-        return redirect("/")
+@app.route('/delete/<int:id>')
+def delete_expense(id):
+    expenses = load_expenses()
+    if 0 <= id < len(expenses):
+        expenses.pop(id)
+        save_expenses(expenses)
+    return redirect('/')
 
-    if amount <= 0:
-        print("Amount must be > 0")
-        return redirect("/")
-
-    date = str(datetime.date.today())
-    expenses.append([name, amount, date])
-    return redirect("/")
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+if __name__ == '__main__':
+    app.run(debug=True)
