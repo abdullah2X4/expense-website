@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مصاريفي</title>
+    <style>
+        * { box-sizing: border-box; font-family: Tahoma, Arial, sans-serif; }
+        body {
+            background: #f0f2f5;
+            padding: 10px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+     .card {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+        h1 { color: #1877f2; text-align: center; font-size: 28px; margin: 0 0 10px 0; }
+     .total {
+            background: linear-gradient(135deg, #1877f2, #0d65d9);
+            color: white;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        input, button {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        button {
+            background: #42b72a;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+     .expense-item {
+            background: #f8f9fa;
+            padding: 14px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+     .amount { color: #e41e3f; font-weight: bold; font-size: 18px; }
+     .date { color: #65676b; font-size: 13px; margin-top: 4px; }
+     .empty { text-align: center; color: #65676b; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>💰 مصاريفي</h1>
+        <div class="total">
+            الإجمالي: {{ total }} جنيه
+        </div>
+
+        <form action="/add" method="POST">
+            <input type="text" name="name" placeholder="صرفت على إيه؟" required>
+            <input type="number" name="amount" step="0.01" placeholder="كام جنيه؟" required>
+            <button type="submit">إضافة مصروف جديد</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>آخر المصاريف</h3>
+        {% if expenses %}
+            {% for expense in expenses|reverse %}
+            <div class="expense-item">
+                <div>
+                    <strong>{{ expense[0] }}</strong>
+                    <div class="date">{{ expense[2] }}</div>
+                </div>
+                <div class="amount">{{ expense[1] }} جنيه</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">لسه مضفتش مصاريف. ابدأ دلوقتي 👆</div>
+        {% endif %}
+    </div>
+</body>
+</html>
