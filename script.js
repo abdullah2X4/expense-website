@@ -35,6 +35,15 @@ const themeDots = document.querySelectorAll('.theme-dot');
 let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 let doughnut = null, payment = null, line = null, editIndex = -1;
 
+// Fix: استخدام encodeURIComponent عشان العربي
+function encodePass(pass) {
+    return btoa(encodeURIComponent(pass));
+}
+
+function decodePass(encoded) {
+    return decodeURIComponent(atob(encoded));
+}
+
 themeDots.forEach(dot => {
     dot.addEventListener('click', () => {
         const theme = dot.dataset.theme;
@@ -56,9 +65,9 @@ cloudBtn.addEventListener('click', () => {
 function checkLock() {
     const pass = localStorage.getItem('appPassword');
     if (!pass) {
-        const newPass = prompt('👑 مرحباً بك في مصاريفي VIP!\n🔐 عيّن كلمة سر قوية للتطبيق:');
+        const newPass = prompt('👑 مرحباً بك في مصاريفي VIP!\n🔐 عيّن كلمة سر: استخدم أرقام وحروف إنجليزي فقط');
         if (newPass && newPass.length >= 4) {
-            localStorage.setItem('appPassword', btoa(newPass));
+            localStorage.setItem('appPassword', encodePass(newPass));
             showApp();
         } else {
             alert('⚠️ كلمة السر لازم 4 حروف على الأقل');
@@ -77,15 +86,27 @@ function showApp() {
     sessionStorage.setItem('unlocked', 'true');
 }
 
-unlockBtn.addEventListener('click', () => {
-    const pass = btoa(passwordInput.value);
-    if (pass === localStorage.getItem('appPassword')) {
-        showApp();
-    } else {
-        lockMsg.textContent = '❌ كلمة السر غلط يا باشا';
-        passwordInput.value = '';
-    }
+// Fix: دعم Enter + تشفير صح
+unlockBtn.addEventListener('click', tryUnlock);
+passwordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') tryUnlock();
 });
+
+function tryUnlock() {
+    try {
+        const inputPass = passwordInput.value;
+        const storedPass = decodePass(localStorage.getItem('appPassword'));
+        if (inputPass === storedPass) {
+            showApp();
+            lockMsg.textContent = '';
+        } else {
+            lockMsg.textContent = '❌ كلمة السر غلط يا باشا';
+            passwordInput.value = '';
+        }
+    } catch(e) {
+        lockMsg.textContent = '❌ في مشكلة. امسح بيانات الموقع وجرب تاني';
+    }
+}
 
 lockBtn.addEventListener('click', () => {
     sessionStorage.removeItem('unlocked');
@@ -266,7 +287,6 @@ function updateCharts(items) {
     });
 }
 
-// صلحت الباج: غيرت من submit لـ click
 addBtn.addEventListener('click', () => {
     const name = nameInput.value.trim();
     const price = parseFloat(priceInput.value);
@@ -348,7 +368,6 @@ themeBtn.addEventListener('click', () => {
     updateCharts(getFilteredExpenses());
 });
 
-// Export Excel VIP
 exportExcelBtn.addEventListener('click', () => {
     const data = expenses.map(e => ({
         'التاريخ': e.date,
@@ -363,7 +382,6 @@ exportExcelBtn.addEventListener('click', () => {
     XLSX.writeFile(wb, `مصاريفي-VIP-${new Date().toISOString().slice(0,10)}.xlsx`);
 });
 
-// Export PDF VIP
 exportPdfBtn.addEventListener('click', () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -384,7 +402,6 @@ exportPdfBtn.addEventListener('click', () => {
     doc.save(`مصاريفي-VIP-${new Date().toISOString().slice(0,10)}.pdf`);
 });
 
-// Export JSON
 exportJsonBtn.addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(expenses, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
@@ -401,7 +418,6 @@ clearBtn.addEventListener('click', () => {
     }
 });
 
-// Init
 monthFilter.value = new Date().toISOString().slice(0, 7);
 budgetInput.value = localStorage.getItem('budget') || '';
 applyTheme();
