@@ -66,7 +66,7 @@ function checkVIP() {
         return false;
     }
 
-    if (!isVIP && !localStorage.getItem('freeMode')) {
+    if (!isVIP &&!localStorage.getItem('freeMode')) {
         paywall.style.display = 'flex';
         app.style.display = 'none';
         return false;
@@ -100,12 +100,12 @@ submitTxBtn.addEventListener('click', () => {
         alert('⚠️ اكتب رقم العملية صحيح');
         return;
     }
-    
+
     localStorage.setItem('pendingTx', txId);
     localStorage.setItem('pendingDate', new Date().toISOString());
-    
+
     alert(`✅ تم استلام طلبك\nرقم العملية: ${txId}\nهيتم مراجعة التحويل وتفعيل VIP خلال 24 ساعة\n\nلو مستعجل ابعت سكرين التحويل على واتساب: ${YOUR_ETISALAT_NUMBER}`);
-    
+
     paywall.style.display = 'none';
     showApp();
 });
@@ -117,19 +117,47 @@ freeBtn.addEventListener('click', () => {
     alert('⚠️ النسخة المجانية: 50 مصروف بس');
 });
 
-// زرار سري ليك انت بس عشان تفعل الناس
-window.activateUser = function(code) {
-    if (code === MASTER_ADMIN_CODE) {
-        const txId = prompt('اكتب رقم العملية بتاع العميل:');
-        if (txId) {
-            const expiry = new Date();
-            expiry.setMonth(expiry.getMonth() + 1);
-            alert(`✅ تم التفعيل\n\nابعت للعميل الكود ده يحطه في Console:\n\nlocalStorage.setItem('vipExpiry','${expiry.toISOString()}'); localStorage.setItem('isVIP','true'); location.reload();`);
+// ========== لوحة تفعيل الأدمن السرية ==========
+let adminClicks = 0;
+document.querySelector('.vip-badge').addEventListener('click', () => {
+    adminClicks++;
+    if (adminClicks === 5) {
+        adminClicks = 0;
+        const adminCode = prompt('🔐 كود الأدمن:');
+        if (adminCode === MASTER_ADMIN_CODE) {
+            const txId = prompt('✅ دخل رقم عملية العميل:');
+            if (txId && txId.length >= 5) {
+                const expiry = new Date();
+                expiry.setMonth(expiry.getMonth() + 1);
+                const activationCode = btoa(`VIP-${txId}-${expiry.toISOString()}`);
+                prompt('📋 ابعت الكود ده للعميل ينسخه كله:', activationCode);
+                alert('✅ ابعت للعميل الرابط ده:\n\n' + window.location.origin + window.location.pathname + '#activate=' + activationCode);
+            }
+        } else {
+            alert('❌ كود غلط');
         }
-    } else {
-        alert('❌ كود غلط');
+    }
+});
+
+// العميل يحط الكود ده في موبايله
+if (window.location.hash.startsWith('#activate=')) {
+    try {
+        const code = window.location.hash.replace('#activate=', '');
+        const decoded = atob(code);
+        if (decoded.startsWith('VIP-')) {
+            const expiry = decoded.split('-').slice(2).join('-');
+            localStorage.setItem('vipExpiry', expiry);
+            localStorage.setItem('isVIP', 'true');
+            localStorage.removeItem('pendingTx');
+            alert('👑 تم تفعيل VIP بنجاح لمدة شهر!');
+            window.location.hash = '';
+            location.reload();
+        }
+    } catch(e) {
+        alert('❌ كود التفعيل غلط');
     }
 }
+// ========== نهاية لوحة الأدمن ==========
 
 themeDots.forEach(dot => {
     dot.addEventListener('click', () => {
