@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مصاريفي - الإصدار الآمن V1.0</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>مصاريفي 💰 V1.0 Secure</h1>
+
+        <div class="add-box">
+            <input type="text" id="name" placeholder="اسم المصروف" maxlength="50">
+            <input type="number" id="price" placeholder="السعر" min="1" max="1000000">
+            <button id="addBtn">إضافة</button>
+        </div>
+
+        <div class="stats">
+            <h3>الإجمالي: <span id="total">0</span> جنيه</h3>
+            <h3>العدد: <span id="count">0</span></h3>
+        </div>
+
+        <div class="actions">
+            <button id="exportBtn">تصدير نسخة احتياطي</button>
+            <button id="clearBtn">مسح الكل</button>
+        </div>
+
+        <ul id="list"></ul>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

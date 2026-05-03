@@ -1,0 +1,19 @@
+body {
+    font-family: 'Cairo', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    margin: 0;
+    padding: 20px;
+}
+.container { max-width: 500px; margin: auto; }
+h1 { text-align: center; color: #38bdf8; }
+.add-box { display: flex; gap: 10px; margin-bottom: 20px; }
+input { flex: 1; padding: 12px; border: 1px solid #334155; border-radius: 8px; background: #1e293b; color: white; }
+button { padding: 12px 20px; border: none; border-radius: 8px; background: #38bdf8; color: #0f172a; font-weight: bold; cursor: pointer; }
+button:hover { opacity: 0.9; }
+.stats { background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+.actions { display: flex; gap: 10px; margin-bottom: 20px; }
+#clearBtn { background: #ef4444; color: white; }
+ul { list-style: none; padding: 0; }
+li { background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.delete { background: #ef4444; color: white; padding: 5px 10px; font-size: 12px; }
