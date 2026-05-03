@@ -4,20 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#6366F1">
-    <title>مصاريفي 💎</title>
+    <title>مصاريفي VIP 👑</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <div id="lockScreen" class="lock-screen">
         <div class="lock-box">
-            <div class="lock-icon">🔐</div>
-            <h2>مصاريفي مقفول</h2>
-            <input type="password" id="passwordInput" placeholder="ادخل كلمة السر">
+            <div class="lock-icon">👑</div>
+            <h2>مصاريفي VIP</h2>
+            <input type="password" id="passwordInput" placeholder="كلمة السر">
             <button id="unlockBtn" class="btn-primary">فتح 🔓</button>
             <p id="lockMsg"></p>
         </div>
@@ -26,9 +27,17 @@
     <div class="container" id="app" style="display:none">
         <header class="glass">
             <div class="header-top">
-                <h1>💎 مصاريفي</h1>
+                <div class="logo">
+                    <h1>💎 مصاريفي <span class="vip-badge">VIP</span></h1>
+                </div>
                 <div class="header-actions">
-                    <button id="installBtn" class="icon-btn" style="display:none">⬇️</button>
+                    <div class="theme-picker">
+                        <button class="theme-dot" data-theme="purple" style="background:#6366F1"></button>
+                        <button class="theme-dot" data-theme="blue" style="background:#3B82F6"></button>
+                        <button class="theme-dot" data-theme="green" style="background:#10B981"></button>
+                        <button class="theme-dot" data-theme="gold" style="background:#F59E0B"></button>
+                    </div>
+                    <button id="cloudBtn" class="icon-btn">☁️</button>
                     <button id="lockBtn" class="icon-btn">🔒</button>
                     <button id="themeBtn" class="icon-btn">🌙</button>
                 </div>
@@ -41,7 +50,10 @@
                 <div class="progress-bar">
                     <div id="progressFill"></div>
                 </div>
-                <span id="budgetText">0 / 0 جنيه</span>
+                <div class="budget-footer">
+                    <span id="budgetText">0 / 0 جنيه</span>
+                    <span id="budgetAlert"></span>
+                </div>
             </div>
         </header>
 
@@ -65,10 +77,26 @@
                             <option value="📱 فواتير">📱 فواتير</option>
                             <option value="🎮 ترفيه">🎮 ترفيه</option>
                             <option value="💊 صحة">💊 صحة</option>
+                            <option value="🛍️ تسوق">🛍️ تسوق</option>
                             <option value="📦 أخرى">📦 أخرى</option>
                         </select>
                     </div>
-                <button type="submit" id="addBtn" class="btn-primary">✨ إضافة المصروف</button>
+                    <div class="input-group">
+                        <label for="payment">💳 طريقة الدفع</label>
+                        <select id="payment" required>
+                            <option value="💵 كاش">💵 كاش</option>
+                            <option value="💳 فيزا">💳 فيزا</option>
+                            <option value="📱 محفظة">📱 محفظة إلكترونية</option>
+                            <option value="🔄 تقسيط">🔄 تقسيط</option>
+                            <option value="🏦 تحويل بنكي">🏦 تحويل بنكي</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="receipt">📸 صورة الفاتورة VIP</label>
+                        <input type="file" id="receipt" accept="image/*">
+                    </div>
+                </div>
+                <button type="button" id="addBtn" class="btn-primary">✨ إضافة المصروف</button>
             </form>
 
             <div class="stats-grid">
@@ -86,6 +114,13 @@
                         <span id="count" class="stat-value">0</span>
                     </div>
                 </div>
+                <div class="stat-card glass">
+                    <div class="stat-icon">💸</div>
+                    <div class="stat-info">
+                        <span class="stat-label">متوسط يومي</span>
+                        <span id="avgDaily" class="stat-value">0 جنيه</span>
+                    </div>
+                </div>
             </div>
 
             <div class="filters glass">
@@ -94,7 +129,9 @@
             </div>
 
             <div class="actions">
-                <button id="exportBtn" class="btn-secondary">📤 تصدير JSON</button>
+                <button id="exportExcelBtn" class="btn-secondary">📊 Excel VIP</button>
+                <button id="exportPdfBtn" class="btn-secondary">📄 PDF VIP</button>
+                <button id="exportJsonBtn" class="btn-secondary">📤 JSON</button>
                 <button id="clearBtn" class="btn-danger">🗑️ مسح الكل</button>
             </div>
 
@@ -104,6 +141,10 @@
                     <canvas id="doughnutChart"></canvas>
                 </div>
                 <div class="chart-card glass">
+                    <h3>💳 توزيع حسب الدفع</h3>
+                    <canvas id="paymentChart"></canvas>
+                </div>
+                <div class="chart-card glass" style="grid-column: 1 / -1;">
                     <h3>📈 صرف آخر 6 شهور</h3>
                     <canvas id="lineChart"></canvas>
                 </div>
@@ -116,7 +157,7 @@
         </main>
 
         <footer>
-            <p>© 2026 مصاريفي 💎 Fintech Grade</p>
+            <p>© 2026 مصاريفي VIP 👑 | Fintech Grade</p>
         </footer>
     </div>
     <script src="script.js"></script>

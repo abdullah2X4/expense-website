@@ -4,15 +4,20 @@ const passwordInput = document.getElementById('passwordInput');
 const unlockBtn = document.getElementById('unlockBtn');
 const lockBtn = document.getElementById('lockBtn');
 const lockMsg = document.getElementById('lockMsg');
-const installBtn = document.getElementById('installBtn');
+const cloudBtn = document.getElementById('cloudBtn');
 const nameInput = document.getElementById('name');
 const priceInput = document.getElementById('price');
 const categoryInput = document.getElementById('category');
+const paymentInput = document.getElementById('payment');
+const receiptInput = document.getElementById('receipt');
 const addBtn = document.getElementById('addBtn');
 const list = document.getElementById('list');
 const totalEl = document.getElementById('total');
 const countEl = document.getElementById('count');
-const exportBtn = document.getElementById('exportBtn');
+const avgDailyEl = document.getElementById('avgDaily');
+const exportExcelBtn = document.getElementById('exportExcelBtn');
+const exportPdfBtn = document.getElementById('exportPdfBtn');
+const exportJsonBtn = document.getElementById('exportJsonBtn');
 const clearBtn = document.getElementById('clearBtn');
 const form = document.getElementById('expense-form');
 const searchInput = document.getElementById('searchInput');
@@ -21,33 +26,43 @@ const monthFilter = document.getElementById('monthFilter');
 const budgetInput = document.getElementById('budgetInput');
 const progressFill = document.getElementById('progressFill');
 const budgetText = document.getElementById('budgetText');
+const budgetAlert = document.getElementById('budgetAlert');
 const doughnutChart = document.getElementById('doughnutChart');
+const paymentChart = document.getElementById('paymentChart');
 const lineChart = document.getElementById('lineChart');
+const themeDots = document.querySelectorAll('.theme-dot');
 
 let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
-let doughnut = null, line = null, editIndex = -1, deferredPrompt = null;
+let doughnut = null, payment = null, line = null, editIndex = -1;
 
-window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.style.display = 'inline-block';
+themeDots.forEach(dot => {
+    dot.addEventListener('click', () => {
+        const theme = dot.dataset.theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('colorTheme', theme);
+        themeDots.forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+    });
 });
 
-installBtn.addEventListener('click', () => {
-    deferredPrompt.prompt();
-});
+const savedTheme = localStorage.getItem('colorTheme') || 'purple';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.querySelector(`[data-theme="${savedTheme}"]`)?.classList.add('active');
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-}
+cloudBtn.addEventListener('click', () => {
+    alert('☁️ ميزة Cloud Sync قريباً في V6.0!\n👑 هتقدر تزامن مصاريفك على كل أجهزتك');
+});
 
 function checkLock() {
     const pass = localStorage.getItem('appPassword');
     if (!pass) {
-        const newPass = prompt('🔐 عيّن كلمة سر للتطبيق لأول مرة:');
-        if (newPass) {
+        const newPass = prompt('👑 مرحباً بك في مصاريفي VIP!\n🔐 عيّن كلمة سر قوية للتطبيق:');
+        if (newPass && newPass.length >= 4) {
             localStorage.setItem('appPassword', btoa(newPass));
             showApp();
+        } else {
+            alert('⚠️ كلمة السر لازم 4 حروف على الأقل');
+            location.reload();
         }
     } else if (sessionStorage.getItem('unlocked') === 'true') {
         showApp();
@@ -67,7 +82,8 @@ unlockBtn.addEventListener('click', () => {
     if (pass === localStorage.getItem('appPassword')) {
         showApp();
     } else {
-        lockMsg.textContent = '❌ كلمة السر غلط';
+        lockMsg.textContent = '❌ كلمة السر غلط يا باشا';
+        passwordInput.value = '';
     }
 });
 
@@ -106,16 +122,34 @@ function updateBudget() {
     const month = monthFilter.value;
     const monthTotal = getMonthExpenses(month).reduce((s, i) => s + i.price, 0);
     const percent = budget? Math.min((monthTotal / budget) * 100, 100) : 0;
+
     progressFill.style.width = `${percent}%`;
-    progressFill.style.background = percent > 90? '#EF4444' : percent > 70? '#F59E0B' : '#10B981';
+
+    if (percent >= 90) {
+        budgetAlert.textContent = '⚠️ قربت تخلص الميزانية!';
+        progressFill.style.background = '#EF4444';
+    } else if (percent >= 80) {
+        budgetAlert.textContent = '⚡ تنبيه: وصلت 80%';
+        progressFill.style.background = '#F59E0B';
+    } else {
+        budgetAlert.textContent = '';
+        progressFill.style.background = '#10B981';
+    }
+
     budgetText.textContent = `${monthTotal.toLocaleString()} / ${budget.toLocaleString()} جنيه`;
 }
 
 function updateUI() {
     const filtered = getFilteredExpenses();
     const total = filtered.reduce((sum, item) => sum + item.price, 0);
+    const month = monthFilter.value;
+    const daysInMonth = new Date(month.split('-')[0], month.split('-')[1], 0).getDate();
+    const avg = total / daysInMonth;
+
     totalEl.textContent = `${total.toLocaleString()} جنيه`;
     countEl.textContent = filtered.length.toLocaleString();
+    avgDailyEl.textContent = `${Math.round(avg).toLocaleString()} جنيه`;
+
     renderExpenses(filtered);
     updateCharts(filtered);
     updateBudget();
@@ -126,10 +160,11 @@ function renderExpenses(items) {
     items.forEach(item => {
         const realIndex = expenses.indexOf(item);
         const li = document.createElement('li');
+        const hasReceipt = item.receipt? '📸' : '';
         li.innerHTML = `
             <div class="expense-info">
-                <span class="expense-name">${sanitize(item.name)}</span>
-                <span class="expense-meta">${item.category} | 📅 ${item.date}</span>
+                <span class="expense-name">${hasReceipt} ${sanitize(item.name)}</span>
+                <span class="expense-meta">${item.category} | ${item.payment} | 📅 ${item.date}</span>
             </div>
             <span class="expense-price">${item.price.toLocaleString()} جنيه</span>
             <div class="expense-actions">
@@ -155,14 +190,40 @@ function updateCharts(items) {
             labels: Object.keys(cats),
             datasets: [{
                 data: Object.values(cats),
-                backgroundColor: ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#06B6D4'],
+                backgroundColor: ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#06B6D4', '#F97316'],
                 borderWidth: 0
             }]
         },
         options: {
             plugins: {
                 legend: {
-                    labels: { color: getComputedStyle(document.body).color, font: { family: 'Cairo' } }
+                    labels: { color: getComputedStyle(document.body).color, font: { family: 'Cairo', weight: '700' } }
+                }
+            }
+        }
+    });
+
+    const payments = {};
+    items.forEach(i => {
+        const pay = i.payment || '💵 كاش';
+        payments[pay] = (payments[pay] || 0) + i.price;
+    });
+
+    if (payment) payment.destroy();
+    payment = new Chart(paymentChart, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(payments),
+            datasets: [{
+                data: Object.values(payments),
+                backgroundColor: ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#6366F1'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    labels: { color: getComputedStyle(document.body).color, font: { family: 'Cairo', weight: '700' } }
                 }
             }
         }
@@ -187,42 +248,69 @@ function updateCharts(items) {
                 label: 'المصروف الشهري',
                 data: data,
                 borderColor: '#6366F1',
-                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                backgroundColor: 'rgba(99, 102, 241, 0.15)',
                 tension: 0.4,
-                fill: true
+                fill: true,
+                borderWidth: 3
             }]
         },
         options: {
             plugins: {
-                legend: { labels: { color: getComputedStyle(document.body).color, font: { family: 'Cairo' } } }
+                legend: { labels: { color: getComputedStyle(document.body).color, font: { family: 'Cairo', weight: '700' } } }
             },
             scales: {
-                y: { ticks: { color: getComputedStyle(document.body).color }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
-                x: { ticks: { color: getComputedStyle(document.body).color }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                y: { ticks: { color: getComputedStyle(document.body).color, font: { weight: '600' } }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                x: { ticks: { color: getComputedStyle(document.body).color, font: { weight: '600' } }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
             }
         }
     });
 }
 
-form.addEventListener('submit', e => {
-    e.preventDefault();
+// صلحت الباج: غيرت من submit لـ click
+addBtn.addEventListener('click', () => {
     const name = nameInput.value.trim();
     const price = parseFloat(priceInput.value);
     const category = categoryInput.value;
-    if (!name || isNaN(price) || price <= 0 || price > 999999) return alert('⚠️ السعر لازم رقم موجب وأقل من مليون');
+    const payment = paymentInput.value;
+    const receiptFile = receiptInput.files[0];
+
+    if (!name || isNaN(price) || price <= 0 || price > 999999) {
+        alert('⚠️ السعر لازم رقم موجب وأقل من مليون');
+        return;
+    }
+
     const date = new Date().toISOString().slice(0, 10);
+    const expenseData = { name, price, category, payment, date };
+
+    if (receiptFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            expenseData.receipt = e.target.result;
+            saveExpense(expenseData);
+        };
+        reader.readAsDataURL(receiptFile);
+    } else {
+        saveExpense(expenseData);
+    }
+});
+
+function saveExpense(data) {
     if (editIndex >= 0) {
-        expenses[editIndex] = {...expenses[editIndex], name, price, category };
+        expenses[editIndex] = {...expenses[editIndex],...data };
         editIndex = -1;
         addBtn.textContent = '✨ إضافة المصروف';
     } else {
-        if (expenses.length >= 1000) return alert('⚠️ وصلت للحد الأقصى 1000 مصروف');
-        expenses.push({ name, price, category, date });
+        if (expenses.length >= 1000) {
+            alert('⚠️ وصلت للحد الأقصى 1000 مصروف VIP');
+            return;
+        }
+        expenses.push(data);
     }
     saveData();
     updateUI();
     form.reset();
-});
+    receiptInput.value = '';
+}
 
 window.deleteExpense = i => {
     if (confirm('🗑️ متأكد عايز تحذف المصروف ده؟')) {
@@ -237,6 +325,7 @@ window.editExpense = i => {
     nameInput.value = item.name;
     priceInput.value = item.price;
     categoryInput.value = item.category;
+    paymentInput.value = item.payment;
     editIndex = i;
     addBtn.textContent = '✅ تحديث المصروف';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -259,11 +348,48 @@ themeBtn.addEventListener('click', () => {
     updateCharts(getFilteredExpenses());
 });
 
-exportBtn.addEventListener('click', () => {
+// Export Excel VIP
+exportExcelBtn.addEventListener('click', () => {
+    const data = expenses.map(e => ({
+        'التاريخ': e.date,
+        'الاسم': e.name,
+        'التصنيف': e.category,
+        'طريقة الدفع': e.payment,
+        'السعر': e.price
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'مصاريفي');
+    XLSX.writeFile(wb, `مصاريفي-VIP-${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+
+// Export PDF VIP
+exportPdfBtn.addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFont('helvetica');
+    doc.text('Masareefy VIP Report', 105, 15, { align: 'center' });
+
+    let y = 30;
+    doc.setFontSize(10);
+    expenses.forEach((e, i) => {
+        if (y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.text(`${e.date} - ${e.name} - ${e.category} - ${e.payment} - ${e.price} EGP`, 20, y);
+        y += 8;
+    });
+
+    doc.save(`مصاريفي-VIP-${new Date().toISOString().slice(0,10)}.pdf`);
+});
+
+// Export JSON
+exportJsonBtn.addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(expenses, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `masareefy-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `masareefy-VIP-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
 });
 
@@ -275,6 +401,7 @@ clearBtn.addEventListener('click', () => {
     }
 });
 
+// Init
 monthFilter.value = new Date().toISOString().slice(0, 7);
 budgetInput.value = localStorage.getItem('budget') || '';
 applyTheme();
