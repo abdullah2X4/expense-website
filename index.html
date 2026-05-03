@@ -3,31 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مصاريفي - الإصدار الآمن V1.0</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';">
+    <title>مصاريفي V1.0 Secure</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>مصاريفي 💰 V1.0 Secure</h1>
+        <header>
+            <h1>مصاريفي V1.0 Secure</h1>
+            <p>إدارة المصاريف بشكل آمن</p>
+        </header>
 
-        <div class="add-box">
-            <input type="text" id="name" placeholder="اسم المصروف" maxlength="50">
-            <input type="number" id="price" placeholder="السعر" min="1" max="1000000">
-            <button id="addBtn">إضافة</button>
-        </div>
+        <main>
+            <form id="expense-form">
+                <div class="input-group">
+                    <label for="name">اسم المصروف:</label>
+                    <input type="text" id="name" placeholder="مثال: بنزين" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="price">السعر:</label>
+                    <input type="number" id="price" placeholder="مثال: 50" required>
+                </div>
+                
+                <button type="submit" id="addBtn">إضافة المصروف</button>
+            </form>
 
-        <div class="stats">
-            <h3>الإجمالي: <span id="total">0</span> جنيه</h3>
-            <h3>العدد: <span id="count">0</span></h3>
-        </div>
+            <div class="stats">
+                <div class="stat-box">
+                    <span>الإجمالي:</span>
+                    <span id="total">0 جنيه</span>
+                </div>
+                <div class="stat-box">
+                    <span>عدد المصاريف:</span>
+                    <span id="count">0</span>
+                </div>
+            </div>
 
-        <div class="actions">
-            <button id="exportBtn">تصدير نسخة احتياطي</button>
-            <button id="clearBtn">مسح الكل</button>
-        </div>
+            <div class="actions">
+                <button id="exportBtn">تصدير نسخة احتياطي</button>
+                <button id="clearBtn">مسح الكل</button>
+            </div>
 
-        <ul id="list"></ul>
+            <div class="expenses-container">
+                <h2>قائمة المصاريف</h2>
+                <ul id="list"></ul>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2026 مصاريفي V1.0 - تم التأمين ضد XSS</p>
+        </footer>
     </div>
 
     <script src="script.js"></script>
