@@ -24,6 +24,37 @@
         </div>
     </div>
 
+    <div id="paywall" class="lock-screen" style="display:none">
+        <div class="lock-box">
+            <div class="lock-icon">💎</div>
+            <h2>مصاريفي VIP</h2>
+            <div id="payStep1">
+                <p style="margin: 20px 0; line-height: 1.8;">
+                    <b>اشترك بـ 50 جنيه / شهر</b><br>
+                    ✨ تقارير Excel + PDF<br>
+                    🎨 4 ثيمات ملونة<br>
+                    📸 صور الفواتير<br>
+                    ♾️ مصاريف غير محدودة
+                </p>
+                <div style="background:var(--card); padding:15px; border-radius:12px; margin:15px 0; border:2px dashed var(--primary);">
+                    <p style="font-size:14px; margin-bottom:8px;">حول على اتصالات كاش:</p>
+                    <p style="font-size:24px; font-weight:900; color:var(--primary); direction:ltr;">01121898023</p>
+                    <p style="font-size:13px; color:var(--text-dim); margin-top:8px;">المبلغ: 50 جنيه</p>
+                </div>
+                <button id="paidBtn" class="btn-primary">أنا حولت الفلوس ✓</button>
+                <button id="freeBtn" class="btn-secondary" style="margin-top:10px">كمل مجاني</button>
+            </div>
+            
+            <div id="payStep2" style="display:none">
+                <p style="margin:20px 0;">اكتب رقم العملية اللي جالك في رسالة اتصالات كاش:</p>
+                <input type="text" id="txIdInput" placeholder="مثال: 1234567890" style="width:100%; padding:14px; border-radius:12px; border:2px solid var(--border); background:var(--card); color:var(--text); text-align:center; font-size:18px; font-weight:700;">
+                <button id="submitTxBtn" class="btn-primary" style="margin-top:15px;">تأكيد التحويل</button>
+                <button id="backBtn" class="btn-secondary" style="margin-top:10px">رجوع</button>
+                <p style="font-size:12px; margin-top:15px; color:var(--text-dim)">هيتم التفعيل خلال 24 ساعة بعد المراجعة<br>أو ابعت سكرين على واتساب: 01121898023</p>
+            </div>
+        </div>
+    </div>
+
     <div class="container" id="app" style="display:none">
         <header class="glass">
             <div class="header-top">
@@ -41,7 +72,6 @@
                     <button id="lockBtn" class="icon-btn">🔒</button>
                     <button id="themeBtn" class="icon-btn">🌙</button>
                 </div>
-            </div>
             <div class="budget-box">
                 <div class="budget-info">
                     <span>💰 ميزانية الشهر</span>

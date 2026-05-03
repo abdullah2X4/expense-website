@@ -1,9 +1,17 @@
 const app = document.getElementById('app');
 const lockScreen = document.getElementById('lockScreen');
+const paywall = document.getElementById('paywall');
+const payStep1 = document.getElementById('payStep1');
+const payStep2 = document.getElementById('payStep2');
 const passwordInput = document.getElementById('passwordInput');
 const unlockBtn = document.getElementById('unlockBtn');
 const lockBtn = document.getElementById('lockBtn');
 const lockMsg = document.getElementById('lockMsg');
+const paidBtn = document.getElementById('paidBtn');
+const freeBtn = document.getElementById('freeBtn');
+const submitTxBtn = document.getElementById('submitTxBtn');
+const backBtn = document.getElementById('backBtn');
+const txIdInput = document.getElementById('txIdInput');
 const cloudBtn = document.getElementById('cloudBtn');
 const nameInput = document.getElementById('name');
 const priceInput = document.getElementById('price');
@@ -35,7 +43,11 @@ const themeDots = document.querySelectorAll('.theme-dot');
 let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 let doughnut = null, payment = null, line = null, editIndex = -1;
 
-// Fix: استخدام encodeURIComponent عشان العربي
+// ✅ رقمك بتاع اتصالات كاش
+const YOUR_ETISALAT_NUMBER = "01121898023";
+// ✅ كود الماستر بتاعك - غيره لو عايز
+const MASTER_ADMIN_CODE = "ABDALLAH2026";
+
 function encodePass(pass) {
     return btoa(encodeURIComponent(pass));
 }
@@ -44,8 +56,87 @@ function decodePass(encoded) {
     return decodeURIComponent(atob(encoded));
 }
 
+function checkVIP() {
+    const vipExpiry = localStorage.getItem('vipExpiry');
+    const isVIP = vipExpiry && new Date(vipExpiry) > new Date();
+    const pendingTx = localStorage.getItem('pendingTx');
+
+    if (pendingTx) {
+        alert(`⏳ طلبك قيد المراجعة\nرقم العملية: ${pendingTx}\nهيتم التفعيل خلال 24 ساعة\n\nللاستعجال ابعت سكرين على واتساب: ${YOUR_ETISALAT_NUMBER}`);
+        return false;
+    }
+
+    if (!isVIP && !localStorage.getItem('freeMode')) {
+        paywall.style.display = 'flex';
+        app.style.display = 'none';
+        return false;
+    }
+    return true;
+}
+
+function activateVIP() {
+    const expiry = new Date();
+    expiry.setMonth(expiry.getMonth() + 1);
+    localStorage.setItem('vipExpiry', expiry.toISOString());
+    localStorage.setItem('isVIP', 'true');
+    localStorage.removeItem('pendingTx');
+    paywall.style.display = 'none';
+    showApp();
+}
+
+paidBtn.addEventListener('click', () => {
+    payStep1.style.display = 'none';
+    payStep2.style.display = 'block';
+});
+
+backBtn.addEventListener('click', () => {
+    payStep2.style.display = 'none';
+    payStep1.style.display = 'block';
+});
+
+submitTxBtn.addEventListener('click', () => {
+    const txId = txIdInput.value.trim();
+    if (txId.length < 5) {
+        alert('⚠️ اكتب رقم العملية صحيح');
+        return;
+    }
+    
+    localStorage.setItem('pendingTx', txId);
+    localStorage.setItem('pendingDate', new Date().toISOString());
+    
+    alert(`✅ تم استلام طلبك\nرقم العملية: ${txId}\nهيتم مراجعة التحويل وتفعيل VIP خلال 24 ساعة\n\nلو مستعجل ابعت سكرين التحويل على واتساب: ${YOUR_ETISALAT_NUMBER}`);
+    
+    paywall.style.display = 'none';
+    showApp();
+});
+
+freeBtn.addEventListener('click', () => {
+    localStorage.setItem('freeMode', 'true');
+    paywall.style.display = 'none';
+    showApp();
+    alert('⚠️ النسخة المجانية: 50 مصروف بس');
+});
+
+// زرار سري ليك انت بس عشان تفعل الناس
+window.activateUser = function(code) {
+    if (code === MASTER_ADMIN_CODE) {
+        const txId = prompt('اكتب رقم العملية بتاع العميل:');
+        if (txId) {
+            const expiry = new Date();
+            expiry.setMonth(expiry.getMonth() + 1);
+            alert(`✅ تم التفعيل\n\nابعت للعميل الكود ده يحطه في Console:\n\nlocalStorage.setItem('vipExpiry','${expiry.toISOString()}'); localStorage.setItem('isVIP','true'); location.reload();`);
+        }
+    } else {
+        alert('❌ كود غلط');
+    }
+}
+
 themeDots.forEach(dot => {
     dot.addEventListener('click', () => {
+        if (!localStorage.getItem('isVIP')) {
+            alert('🔒 الثيمات ميزة VIP بس بـ 50ج/شهر');
+            return;
+        }
         const theme = dot.dataset.theme;
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('colorTheme', theme);
@@ -81,12 +172,18 @@ function checkLock() {
 }
 
 function showApp() {
+    if (!checkVIP()) return;
     lockScreen.style.display = 'none';
     app.style.display = 'block';
     sessionStorage.setItem('unlocked', 'true');
+
+    if (!localStorage.getItem('isVIP')) {
+        document.getElementById('exportExcelBtn').style.display = 'none';
+        document.getElementById('exportPdfBtn').style.display = 'none';
+        document.querySelector('.theme-picker').style.display = 'none';
+    }
 }
 
-// Fix: دعم Enter + تشفير صح
 unlockBtn.addEventListener('click', tryUnlock);
 passwordInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') tryUnlock();
@@ -288,6 +385,11 @@ function updateCharts(items) {
 }
 
 addBtn.addEventListener('click', () => {
+    if (!localStorage.getItem('isVIP') && expenses.length >= 50) {
+        alert('🔒 وصلت للحد الأقصى 50 مصروف في النسخة المجانية\nرقي لـ VIP بـ 50ج شهرياً');
+        return;
+    }
+
     const name = nameInput.value.trim();
     const price = parseFloat(priceInput.value);
     const category = categoryInput.value;
@@ -320,7 +422,7 @@ function saveExpense(data) {
         editIndex = -1;
         addBtn.textContent = '✨ إضافة المصروف';
     } else {
-        if (expenses.length >= 1000) {
+        if (!localStorage.getItem('isVIP') && expenses.length >= 1000) {
             alert('⚠️ وصلت للحد الأقصى 1000 مصروف VIP');
             return;
         }
@@ -369,6 +471,10 @@ themeBtn.addEventListener('click', () => {
 });
 
 exportExcelBtn.addEventListener('click', () => {
+    if (!localStorage.getItem('isVIP')) {
+        alert('🔒 الميزة دي VIP بس بـ 50ج/شهر');
+        return;
+    }
     const data = expenses.map(e => ({
         'التاريخ': e.date,
         'الاسم': e.name,
@@ -383,6 +489,10 @@ exportExcelBtn.addEventListener('click', () => {
 });
 
 exportPdfBtn.addEventListener('click', () => {
+    if (!localStorage.getItem('isVIP')) {
+        alert('🔒 الميزة دي VIP بس بـ 50ج/شهر');
+        return;
+    }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     doc.setFont('helvetica');
