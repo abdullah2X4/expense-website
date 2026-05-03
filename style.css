@@ -17,3 +17,47 @@ button:hover { opacity: 0.9; }
 ul { list-style: none; padding: 0; }
 li { background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 .delete { background: #ef4444; color: white; padding: 5px 10px; font-size: 12px; }
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#themeBtn {
+    background: none;
+    border: 2px solid #00C9A7;
+    font-size: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.search-box {
+    margin: 20px 0;
+}
+#searchInput {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid #00C9A7;
+    background: #16213e;
+    color: #e0e0e0;
+    font-size: 16px;
+}
+.chart-container {
+    background: #16213e;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+}
+body.light-mode {
+    background: #f0f0f0;
+    color: #1a1a2e;
+}
+body.light-mode.container { background: #ffffff; }
+body.light-mode header { background: #00C9A7; }
+body.light-mode.stat-box { background: #e9ecef; }
+body.light-mode.expenses-container { background: #e9ecef; }
+body.light-mode li { background: #ffffff; }
+body.light-mode #searchInput { background: #ffffff; color: #1a1a2e; }
+body.light-mode.chart-container { background: #ffffff; }
+body.light-mode footer { background: #00C9A7; color: #1a1a2e; }

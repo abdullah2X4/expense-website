@@ -3,31 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مصاريفي V1.0 Secure</title>
+    <title>مصاريفي V2.0 Pro</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>مصاريفي V1.0 Secure</h1>
-            <p>إدارة المصاريف بشكل آمن</p>
+            <div class="header-top">
+                <h1>مصاريفي V2.0 Pro</h1>
+                <button id="themeBtn">🌙</button>
+            </div>
+            <p>إدارة المصاريف بشكل احترافي</p>
         </header>
-
         <main>
             <form id="expense-form">
                 <div class="input-group">
                     <label for="name">اسم المصروف:</label>
                     <input type="text" id="name" placeholder="مثال: بنزين" required>
                 </div>
-                
                 <div class="input-group">
                     <label for="price">السعر:</label>
                     <input type="number" id="price" placeholder="مثال: 50" required>
                 </div>
-                
                 <button type="submit" id="addBtn">إضافة المصروف</button>
             </form>
-
             <div class="stats">
                 <div class="stat-box">
                     <span>الإجمالي:</span>
@@ -38,23 +38,26 @@
                     <span id="count">0</span>
                 </div>
             </div>
-
             <div class="actions">
                 <button id="exportBtn">تصدير نسخة احتياطي</button>
                 <button id="clearBtn">مسح الكل</button>
             </div>
-
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="ابحث في المصاريف...">
+            </div>
+            <div class="chart-container">
+                <h2>توزيع المصاريف</h2>
+                <canvas id="expenseChart"></canvas>
+            </div>
             <div class="expenses-container">
                 <h2>قائمة المصاريف</h2>
                 <ul id="list"></ul>
             </div>
         </main>
-
         <footer>
-            <p>© 2026 مصاريفي V1.0 - تم التأمين ضد XSS</p>
+            <p>© 2026 مصاريفي V2.0 - تم التأمين ضد XSS</p>
         </footer>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
