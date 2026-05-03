@@ -1,6 +1,3 @@
-// ===== مصاريفي V1.0 SECURE - الكود الآمن كامل =====
-// كل سطر هنا مكتوب عشان يحمي موقعك
-
 const nameInput = document.getElementById('name');
 const priceInput = document.getElementById('price');
 const addBtn = document.getElementById('addBtn');
@@ -9,68 +6,81 @@ const totalEl = document.getElementById('total');
 const countEl = document.getElementById('count');
 const exportBtn = document.getElementById('exportBtn');
 const clearBtn = document.getElementById('clearBtn');
+const form = document.getElementById('expense-form');
 
-// بنجيب الداتا القديمة من المتصفح أو نبدأ فاضي
 let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 
-// 1. أهم دالة حماية: تنظيف النص من XSS
 function sanitize(text) {
     const temp = document.createElement('div');
-    temp.textContent = text; // دي بتحول <script> لنص عادي
+    temp.textContent = text;
     return temp.innerHTML;
 }
 
-// 2. دالة الحفظ الآمن عشان المتصفح ميضربش
 function saveData() {
-    try {
-        localStorage.setItem('expenses', JSON.stringify(expenses));
-    } catch (e) {
-        alert('مساحة التخزين اتملت. امسح مصاريف قديمة عشان تضيف جديد');
-    }
+    localStorage.setItem('expenses', JSON.stringify(expenses));
 }
 
-// 3. دالة الإضافة - فيها درع الحماية V1 كامل
-function addExpense() {
+function updateUI() {
+    const total = expenses.reduce((sum, item) => sum + item.price, 0);
+    totalEl.textContent = `${total} جنيه`;
+    countEl.textContent = expenses.length;
+}
+
+function renderExpenses() {
+    list.innerHTML = '';
+    expenses.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${sanitize(item.name)}</span>
+            <span>${item.price} جنيه</span>
+            <button onclick="deleteExpense(${index})">حذف</button>
+        `;
+        list.appendChild(li);
+    });
+    updateUI();
+}
+
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
     const name = nameInput.value.trim();
     const price = parseFloat(priceInput.value);
-
-    // الدرع: Validation كامل ضد أي Input غلط
-    if (name === "") return alert("اكتب اسم المصروف الأول");
-    if (name.length > 50) return alert("الاسم طويل جداً. آخرك 50 حرف");
-    if (isNaN(price) || price <= 0) return alert("السعر لازم رقم موجب أكبر من صفر");
-    if (price > 1000000) return alert("مليون جنيه في مصروف؟ اهدى على نفسك 😂");
-    if (expenses.length >= 1000) return alert("وصلت للحد الأقصى 1000 مصروف. امسح القديم");
-
-    expenses.push({
-        id: Date.now(), // ID فريد عشان الحذف
-        name: sanitize(name), // بنظف الاسم قبل ما نحفظه
-        price: price
-    });
-
+    if (!name || isNaN(price) || price <= 0 || price > 999999) {
+        alert('السعر لازم رقم موجب وأقل من مليون');
+        return;
+    }
+    if (expenses.length >= 1000) {
+        alert('وصلت للحد الأقصى 1000 مصروف');
+        return;
+    }
+    expenses.push({ name, price });
     saveData();
-    render();
+    renderExpenses();
     nameInput.value = '';
     priceInput.value = '';
-    nameInput.focus(); // يرجع الكيبورد لخانة الاسم
+});
+
+window.deleteExpense = (index) => {
+    expenses.splice(index, 1);
+    saveData();
+    renderExpenses();
 }
 
-// 4. دالة العرض - آمنة 100% من XSS
-function render() {
-    list.innerHTML = '';
-    let total = 0;
+exportBtn.addEventListener('click', () => {
+    const dataStr = JSON.stringify(expenses, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `masareefy-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+});
 
-    expenses.forEach(item => {
-        total += item.price;
-        const li = document.createElement('li');
+clearBtn.addEventListener('click', () => {
+    if (confirm('متأكد عايز تمسح كل المصاريف؟')) {
+        expenses = [];
+        saveData();
+        renderExpenses();
+    }
+});
 
-        // بنستخدم textContent مش innerHTML عشان الأمان
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = item.name; // آمن حتى لو الاسم فيه <script>
-        
-        const priceSpan = document.createElement('span');
-        priceSpan.textContent = `${item.price} جنيه`;
-
-        li.appendChild(nameSpan);
-        li.appendChild(priceSpan);
-
-        const delBtn = document.createElement('
+renderExpenses();
