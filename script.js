@@ -1,5 +1,6 @@
 const nameInput = document.getElementById('name');
 const priceInput = document.getElementById('price');
+const categoryInput = document.getElementById('category');
 const addBtn = document.getElementById('addBtn');
 const list = document.getElementById('list');
 const totalEl = document.getElementById('total');
@@ -9,42 +10,67 @@ const clearBtn = document.getElementById('clearBtn');
 const form = document.getElementById('expense-form');
 const searchInput = document.getElementById('searchInput');
 const themeBtn = document.getElementById('themeBtn');
+const monthFilter = document.getElementById('monthFilter');
 const chartCanvas = document.getElementById('expenseChart');
+
 let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 let expenseChart = null;
+let editIndex = -1;
+
 function sanitize(text) {
     const temp = document.createElement('div');
     temp.textContent = text;
     return temp.innerHTML;
 }
+
 function saveData() {
     localStorage.setItem('expenses', JSON.stringify(expenses));
 }
-function updateUI(filteredExpenses = expenses) {
-    const total = expenses.reduce((sum, item) => sum + item.price, 0);
-    totalEl.textContent = `${total} جنيه`;
-    countEl.textContent = expenses.length;
-    renderExpenses(filteredExpenses);
-    updateChart();
+
+function getFilteredExpenses() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedMonth = monthFilter.value;
+    
+    return expenses.filter(item => {
+        const matchSearch = item.name.toLowerCase().includes(searchTerm);
+        const matchMonth = !selectedMonth || item.date.startsWith(selectedMonth);
+        return matchSearch && matchMonth;
+    });
 }
+
+function updateUI() {
+    const filtered = getFilteredExpenses();
+    const total = filtered.reduce((sum, item) => sum + item.price, 0);
+    totalEl.textContent = `${total} جنيه`;
+    countEl.textContent = filtered.length;
+    renderExpenses(filtered);
+    updateChart(filtered);
+}
+
 function renderExpenses(itemsToRender) {
     list.innerHTML = '';
-    itemsToRender.forEach((item, index) => {
+    itemsToRender.forEach((item) => {
         const realIndex = expenses.indexOf(item);
         const li = document.createElement('li');
         li.innerHTML = `
-            <span>${sanitize(item.name)}</span>
-            <span>${item.price} جنيه</span>
-            <button onclick="deleteExpense(${realIndex})">حذف</button>
+            <div class="expense-info">
+                <span class="expense-name">${sanitize(item.name)}</span>
+                <span class="expense-meta">${item.category} | ${item.date}</span>
+            </div>
+            <span class="expense-price">${item.price} جنيه</span>
+            <div class="expense-actions">
+                <button onclick="editExpense(${realIndex})">تعديل</button>
+                <button onclick="deleteExpense(${realIndex})">حذف</button>
+            </div>
         `;
         list.appendChild(li);
     });
 }
-function updateChart() {
+
+function updateChart(items) {
     const categories = {};
-    expenses.forEach(item => {
-        const name = item.name.toLowerCase();
-        categories[name] = (categories[name] || 0) + item.price;
+    items.forEach(item => {
+        categories[item.category] = (categories[item.category] || 0) + item.price;
     });
     const labels = Object.keys(categories);
     const data = Object.values(categories);
@@ -63,57 +89,80 @@ function updateChart() {
         }
     });
 }
+
 form.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = nameInput.value.trim();
     const price = parseFloat(priceInput.value);
+    const category = categoryInput.value;
+    
     if (!name || isNaN(price) || price <= 0 || price > 999999) {
         alert('السعر لازم رقم موجب وأقل من مليون');
         return;
     }
-    if (expenses.length >= 1000) {
-        alert('وصلت للحد الأقصى 1000 مصروف');
-        return;
+    
+    const date = new Date().toISOString().slice(0,10);
+    
+    if (editIndex >= 0) {
+        expenses[editIndex] = { name, price, category, date: expenses[editIndex].date };
+        editIndex = -1;
+        addBtn.textContent = 'إضافة المصروف';
+    } else {
+        if (expenses.length >= 1000) {
+            alert('وصلت للحد الأقصى 1000 مصروف');
+            return;
+        }
+        expenses.push({ name, price, category, date });
     }
-    expenses.push({ name, price });
+    
     saveData();
     updateUI();
-    nameInput.value = '';
-    priceInput.value = '';
+    form.reset();
 });
+
 window.deleteExpense = (index) => {
     expenses.splice(index, 1);
     saveData();
     updateUI();
 }
-searchInput.addEventListener('input', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const filtered = expenses.filter(item =>
-        item.name.toLowerCase().includes(searchTerm)
-    );
-    renderExpenses(filtered);
-});
+
+window.editExpense = (index) => {
+    const item = expenses[index];
+    nameInput.value = item.name;
+    priceInput.value = item.price;
+    categoryInput.value = item.category;
+    editIndex = index;
+    addBtn.textContent = 'تحديث المصروف';
+    window.scrollTo(0, 0);
+}
+
+searchInput.addEventListener('input', updateUI);
+monthFilter.addEventListener('input', updateUI);
+
 function applyTheme() {
     const theme = localStorage.getItem('theme') || 'dark';
     document.body.classList.toggle('light-mode', theme === 'light');
     themeBtn.textContent = theme === 'light'? '🌙' : '☀️';
 }
+
 themeBtn.addEventListener('click', () => {
     const current = localStorage.getItem('theme') || 'dark';
     const newTheme = current === 'dark'? 'light' : 'dark';
     localStorage.setItem('theme', newTheme);
     applyTheme();
-    updateChart();
+    updateChart(getFilteredExpenses());
 });
+
 exportBtn.addEventListener('click', () => {
     const dataStr = JSON.stringify(expenses, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `masareefy-V2-${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `masareefy-V3-${new Date().toISOString().slice(0,10)}.json`;
     a.click();
 });
+
 clearBtn.addEventListener('click', () => {
     if (confirm('متأكد عايز تمسح كل المصاريف؟')) {
         expenses = [];
@@ -121,5 +170,7 @@ clearBtn.addEventListener('click', () => {
         updateUI();
     }
 });
+
+monthFilter.value = new Date().toISOString().slice(0,7);
 applyTheme();
 updateUI();

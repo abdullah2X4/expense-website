@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مصاريفي V2.0 Pro</title>
+    <title>مصاريفي V3.0 Ultra</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -11,10 +11,10 @@
     <div class="container">
         <header>
             <div class="header-top">
-                <h1>مصاريفي V2.0 Pro</h1>
+                <h1>مصاريفي V3.0 Ultra</h1>
                 <button id="themeBtn">🌙</button>
             </div>
-            <p>إدارة المصاريف بشكل احترافي</p>
+            <p>نظام إدارة مصاريف احترافي</p>
         </header>
         <main>
             <form id="expense-form">
@@ -26,11 +26,22 @@
                     <label for="price">السعر:</label>
                     <input type="number" id="price" placeholder="مثال: 50" required>
                 </div>
+                <div class="input-group">
+                    <label for="category">التصنيف:</label>
+                    <select id="category" required>
+                        <option value="أكل">أكل</option>
+                        <option value="مواصلات">مواصلات</option>
+                        <option value="فواتير">فواتير</option>
+                        <option value="ترفيه">ترفيه</option>
+                        <option value="صحة">صحة</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                </div>
                 <button type="submit" id="addBtn">إضافة المصروف</button>
             </form>
             <div class="stats">
                 <div class="stat-box">
-                    <span>الإجمالي:</span>
+                    <span>إجمالي الشهر:</span>
                     <span id="total">0 جنيه</span>
                 </div>
                 <div class="stat-box">
@@ -38,15 +49,16 @@
                     <span id="count">0</span>
                 </div>
             </div>
+            <div class="filters">
+                <input type="month" id="monthFilter">
+                <input type="text" id="searchInput" placeholder="ابحث بالاسم...">
+            </div>
             <div class="actions">
-                <button id="exportBtn">تصدير نسخة احتياطي</button>
+                <button id="exportBtn">تصدير JSON</button>
                 <button id="clearBtn">مسح الكل</button>
             </div>
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="ابحث في المصاريف...">
-            </div>
             <div class="chart-container">
-                <h2>توزيع المصاريف</h2>
+                <h2>توزيع المصاريف حسب التصنيف</h2>
                 <canvas id="expenseChart"></canvas>
             </div>
             <div class="expenses-container">
@@ -55,7 +67,7 @@
             </div>
         </main>
         <footer>
-            <p>© 2026 مصاريفي V2.0 - تم التأمين ضد XSS</p>
+            <p>© 2026 مصاريفي V3.0 - XSS Safe + Categories</p>
         </footer>
     </div>
     <script src="script.js"></script>

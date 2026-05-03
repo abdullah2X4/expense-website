@@ -61,3 +61,42 @@ body.light-mode li { background: #ffffff; }
 body.light-mode #searchInput { background: #ffffff; color: #1a1a2e; }
 body.light-mode.chart-container { background: #ffffff; }
 body.light-mode footer { background: #00C9A7; color: #1a1a2e; }
+.filters {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+#monthFilter, #category {
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid #00C9A7;
+    background: #16213e;
+    color: #e0e0e0;
+    font-size: 16px;
+    flex: 1;
+}
+.expense-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.expense-meta {
+    font-size: 12px;
+    opacity: 0.7;
+}
+.expense-actions {
+    display: flex;
+    gap: 5px;
+}
+.expense-actions button {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+li {
+    align-items: center;
+    gap: 10px;
+}
+body.light-mode #monthFilter, body.light-mode #category {
+    background: #ffffff;
+    color: #1a1a2e;
+}
