@@ -1,120 +1,346 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="htmlRoot">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masarefy V6 - Pricing</title>
+    <title>Masarefy V6 Pro - خطط الأسعار</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = { 
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-in-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'float': 'float 3s ease-in-out infinite'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
         body { font-family: 'Cairo', sans-serif; }
-        
-        /* انيميشن الكروت */
-        .plan-card { transition: all 0.3s ease; }
-        .plan-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3); }
-        
-        /* انيميشن دخول */
-        .fade-in { animation: fadeIn 0.6s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* انيميشن الزرار */
-        button:active { transform: scale(0.97); }
-        button { transition: all 0.2s; }
-        
-        /* بادج VIP */
-        .vip-badge { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+       .bg-animated {
+            background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #06b6d4, #10b981, #f59e0b, #ef4444);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+      .card-hover { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+      .card-hover:hover { transform: translateY(-12px) scale(1.03); box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3); }
+      .pro-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+      .max-gradient { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 min-h-screen p-4">
+<body class="bg-animated min-h-screen">
     
-    <!-- زرار اللغة والعملة -->
-    <div class="fixed top-4 right-4 flex gap-2 z-50">
-        <button id="langBtn" onclick="toggleLang()" class="bg-white hover:bg-gray-100 px-4 py-2 rounded-lg text-gray-800 font-bold shadow-md transition">EN</button>
-        <button id="currencyBtn" onclick="toggleCurrency()" class="bg-white hover:bg-gray-100 px-4 py-2 rounded-lg text-gray-800 font-bold shadow-md transition">ج.م</button>
+    <!-- Header -->
+    <nav class="bg-white/10 backdrop-blur-lg text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg animate-float">
+                        <i class="fas fa-wallet text-white text-2xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-black">Masarefy V6 <span class="text-yellow-300">Pro</span></h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select id="langSelect" onchange="setLang(this.value)" class="px-4 py-2 rounded-xl bg-white/20 text-white border-0 focus:ring-2 focus:ring-white">
+                        <option value="ar">🇪🇬 العربية</option>
+                        <option value="en">🇺🇸 English</option>
+                        <option value="fr">🇫🇷 Français</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                        <option value="es">🇪🇸 Español</option>
+                    </select>
+                    <a href="login.html" class="bg-white text-blue-600 px-6 py-2 rounded-xl font-bold hover:bg-gray-100 transition">
+                        <span data-i18n="login">تسجيل الدخول</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="container mx-auto px-4 py-16 text-center text-white animate-fade-in">
+        <h2 class="text-5xl md:text-6xl font-black mb-6 animate-slide-up">
+            <span data-i18n="hero_title">اختر الخطة المناسبة لك</span>
+        </h2>
+        <p class="text-xl md:text-2xl mb-8 opacity-90" data-i18n="hero_subtitle">
+            مدير مصاريفك الذكي بالـ AI - وفر فلوسك ووقتك
+        </p>
+        <div class="flex items-center justify-center gap-4 mb-12">
+            <span class="text-lg" data-i18n="monthly">شهري</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="billingToggle" class="sr-only peer">
+                <div class="w-14 h-7 bg-white/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
+            </label>
+            <span class="text-lg">
+                <span data-i18n="yearly">سنوي</span>
+                <span class="bg-yellow-400 text-gray-900 px-2 py-1 rounded-lg text-sm font-bold ml-2" data-i18n="save_50">وفر 50 ج.م</span>
+            </span>
+        </div>
     </div>
 
-    <div class="max-w-7xl mx-auto py-8">
-        <div class="text-center mb-12 fade-in">
-            <h1 id="choosePlanTitle" class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 mb-4">اختر الخطة المناسبة لك</h1>
-            <p class="text-gray-600 text-lg">ابدأ مجاناً أو اشترك في VIP واستمتع بالذكاء الاصطناعي 🤖</p>
-        </div>
-
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Pricing Cards -->
+    <div class="container mx-auto px-4 pb-20">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
             
             <!-- Free Plan -->
-            <div class="plan-card bg-white rounded-2xl shadow-xl p-8 fade-in">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Free</h3>
-                <div class="text-4xl font-extrabold text-purple-600 mb-1">0 <span id="freePerMonth" class="text-lg text-gray-500">/شهر</span></div>
-                <p id="startFreeSub" class="text-sm text-gray-500 mb-6">إدارة أموالك بالذكاء الاصطناعي</p>
-                <ul class="space-y-3 mb-8 text-gray-700">
-                    <li class="flex items-center gap-2">✅ 50 معاملة/شهر</li>
-                    <li class="flex items-center gap-2">✅ رسم بياني أساسي</li>
-                    <li class="flex items-center gap-2 text-gray-400">❌ تصدير البيانات</li>
-                    <li class="flex items-center gap-2 text-gray-400">❌ مساعد AI</li>
+            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 card-hover animate-slide-up">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2" data-i18n="free">مجاني</h3>
+                    <p class="text-gray-500 dark:text-gray-400" data-i18n="for_beginners">للمبتدئين</p>
+                    <div class="my-6">
+                        <span class="text-5xl font-black text-gray-800 dark:text-white">0</span>
+                        <span class="text-xl text-gray-600 dark:text-gray-400" data-i18n="currency_symbol">ج.م</span>
+                        <span class="text-gray-500" data-i18n="forever">/للأبد</span>
+                    </div>
+                </div>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        <span data-i18n="feat_50">50 معاملة/شهر</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        <span data-i18n="feat_reports">تقارير أساسية</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        <span data-i18n="feat_chart">رسوم بيانية</span>
+                    </li>
+                    <li class="flex items-center gap-3 text-gray-400">
+                        <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                        <span data-i18n="no_ai">بدون AI</span>
+                    </li>
+                    <li class="flex items-center gap-3 text-gray-400">
+                        <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                        <span data-i18n="no_export">بدون تصدير</span>
+                    </li>
                 </ul>
-                <button onclick="selectPlan('free')" id="startFreeBtn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">ابدأ مجاناً</button>
+                <a href="login.html" class="block w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white text-center py-3 rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <span data-i18n="start_free">ابدأ مجاناً</span>
+                </a>
             </div>
 
             <!-- Pro Plan -->
-            <div class="plan-card bg-white rounded-2xl shadow-xl p-8 fade-in border-2 border-purple-200">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Pro</h3>
-                <div id="proPrice" class="text-4xl font-extrabold text-purple-600 mb-1">25 ج.م<span class="text-lg text-gray-500">/شهر</span></div>
-                <p class="text-sm text-gray-500 mb-6">للمستخدمين المحترفين</p>
-                <ul class="space-y-3 mb-8 text-gray-700">
-                    <li class="flex items-center gap-2">✅ معاملات غير محدودة</li>
-                    <li class="flex items-center gap-2">✅ رسم بياني متقدم</li>
-                    <li class="flex items-center gap-2">✅ تصدير CSV/Excel</li>
-                    <li class="flex items-center gap-2 text-gray-400">❌ مساعد AI</li>
+            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 card-hover border-4 border-blue-500 relative animate-slide-up" style="animation-delay: 0.1s">
+                <span class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg" data-i18n="popular">
+                    ⭐ الأكثر شعبية
+                </span>
+                <div class="text-center mb-6 mt-4">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-2">Pro</h3>
+                    <p class="text-gray-500 dark:text-gray-400" data-i18n="for_pro">للمحترفين</p>
+                    <div class="my-6">
+                        <span class="text-5xl font-black text-gray-800 dark:text-white" id="proPrice">25</span>
+                        <span class="text-xl text-gray-600 dark:text-gray-400" data-i18n="currency_symbol">ج.م</span>
+                        <span class="text-gray-500" id="proPeriod" data-i18n="per_month">/شهر</span>
+                    </div>
+                </div>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        <span class="font-semibold" data-i18n="unlimited">معاملات غير محدودة</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        <span data-i18n="basic_ai">AI أساسي - تحليل مصاريف</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        <span data-i18n="export_all">تصدير Excel/PDF</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        <span data-i18n="invoices">رفع فواتير وصور</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        <span data-i18n="budget_alert">تنبيهات الميزانية</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        <span data-i18n="categories">فئات مخصصة</span>
+                    </li>
                 </ul>
-                <button onclick="selectPlan('pro_month')" id="subscribeNowBtn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-lg">اشترك الآن</button>
+                <button onclick="selectPlan('pro')" class="block w-full pro-gradient text-white text-center py-3 rounded-xl font-bold hover:shadow-xl transition btn-animate">
+                    <span data-i18n="choose_pro">اختر Pro</span>
+                </button>
             </div>
 
-            <!-- Max Monthly Plan -->
-            <div class="plan-card bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl shadow-2xl p-8 fade-in relative overflow-hidden">
-                <div class="absolute top-4 right-4 bg-yellow-400 text-gray-800 px-3 py-1 rounded-full text-xs font-bold vip-badge" id="mostPopular">الأكثر شيوعاً</div>
-                <h3 id="maxMonthlyTitle" class="text-2xl font-bold text-white mb-2">مصاريفي V6 Max</h3>
-                <div id="maxMonthPrice" class="text-4xl font-extrabold text-white mb-1">50 ج.م<span class="text-lg text-purple-200">/شهر</span></div>
-                <p class="text-sm text-purple-200 mb-6">كل المميزات + AI ذكي 🤖</p>
-                <ul class="space-y-3 mb-8 text-white">
-                    <li class="flex items-center gap-2">✅ كل مميزات Pro</li>
-                    <li class="flex items-center gap-2">✅ مساعد AI VIP 🤖</li>
-                    <li class="flex items-center gap-2">✅ تحليل ذكي للمصاريف</li>
-                    <li class="flex items-center gap-2">✅ توقع الشهر الجاي</li>
-                    <li class="flex items-center gap-2">✅ خطة توفير مخصصة</li>
+            <!-- Max Plan -->
+            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 card-hover max-gradient text-white relative animate-slide-up" style="animation-delay: 0.2s">
+                <span class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-6 py-2 rounded-full text-sm font-black shadow-lg">
+                    👑 MAX
+                </span>
+                <div class="text-center mb-6 mt-4">
+                    <h3 class="text-2xl font-bold mb-2">Max</h3>
+                    <p class="opacity-90" data-i18n="for_max">للمحترفين جداً</p>
+                    <div class="my-6">
+                        <span class="text-5xl font-black" id="maxPrice">50</span>
+                        <span class="text-xl opacity-90" data-i18n="currency_symbol">ج.م</span>
+                        <span class="opacity-75" id="maxPeriod" data-i18n="per_month">/شهر</span>
+                    </div>
+                </div>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-yellow-300 text-xl"></i>
+                        <span class="font-semibold" data-i18n="all_pro_features">كل مميزات Pro</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-yellow-300 text-xl"></i>
+                        <span data-i18n="gpt4">AI متقدم GPT-4</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-yellow-300 text-xl"></i>
+                        <span data-i18n="predictive">تحليل تنبؤي للمصاريف</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-yellow-300 text-xl"></i>
+                        <span data-i18n="smart_saving">نصائح توفير ذكية</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-yellow-300 text-xl"></i>
+                        <span data-i18n="priority_support">دعم أولوية 24/7</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-yellow-300 text-xl"></i>
+                        <span data-i18n="api_access">وصول API</span>
+                    </li>
                 </ul>
-                <button onclick="selectPlan('max_month')" id="subscribeVIPBtn" class="w-full bg-white hover:bg-gray-100 text-purple-600 font-bold py-3 rounded-xl transition shadow-lg">اشترك VIP</button>
+                <button onclick="selectPlan('max')" class="block w-full bg-white text-purple-600 text-center py-3 rounded-xl font-black hover:bg-gray-100 shadow-lg btn-animate">
+                    <span data-i18n="choose_max">اختر Max</span>
+                </button>
             </div>
-
-            <!-- Max Yearly Plan -->
-            <div class="plan-card bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 rounded-2xl shadow-2xl p-8 fade-in relative overflow-hidden">
-                <div class="absolute top-4 right-4 bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-bold" id="save50">وفر 50 جنيه</div>
-                <h3 id="maxYearlyTitle" class="text-2xl font-bold text-white mb-2">مصاريفي V6 Max VIP</h3>
-                <div id="maxYearPrice" class="text-4xl font-extrabold text-white mb-1">550 ج.م<span class="text-lg text-orange-100">/سنة</span></div>
-                <p id="maxYearInstead" class="text-sm text-orange-100 mb-6">بدل 600 جنيه</p>
-                <ul class="space-y-3 mb-8 text-white">
-                    <li class="flex items-center gap-2">✅ كل مميزات Max</li>
-                    <li class="flex items-center gap-2">✅ توفير 50 جنيه</li>
-                    <li class="flex items-center gap-2">✅ دعم VIP مباشر</li>
-                    <li class="flex items-center gap-2">✅ أولوية في التحديثات</li>
-                </ul>
-                <button onclick="selectPlan('max_year')" id="subscribeYearlyBtn" class="w-full bg-white hover:bg-gray-100 text-orange-600 font-bold py-3 rounded-xl transition shadow-lg">اشترك VIP</button>
-            </div>
-
         </div>
 
         <!-- Payment Info -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 text-center fade-in">
-            <p id="paymentText" class="text-gray-700 font-bold mb-2">للدفع: اتصالات كاش أو فودافون كاش أو أورانج كاش</p>
-            <p id="paymentNumber" class="text-3xl font-extrabold text-purple-600">01121898023</p>
-            <p class="text-sm text-gray-500 mt-2">بعد التحويل ابعت سكرين + رقم العملية على واتس للتفعيل الفوري</p>
+        <div class="max-w-4xl mx-auto mt-16 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 animate-slide-up">
+            <h3 class="text-2xl font-bold text-center mb-6 text-gray-800 dark:text-white">
+                <i class="fas fa-credit-card text-primary"></i>
+                <span data-i18n="payment_methods">طرق الدفع</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 rounded-2xl">
+                    <i class="fas fa-mobile-alt text-4xl text-red-600 mb-3"></i>
+                    <h4 class="font-bold text-lg mb-2">Vodafone Cash</h4>
+                    <p class="font-mono text-xl font-black">01121898023</p>
+                </div>
+                <div class="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-2xl">
+                    <i class="fas fa-mobile-alt text-4xl text-green-600 mb-3"></i>
+                    <h4 class="font-bold text-lg mb-2">Etisalat Cash</h4>
+                    <p class="font-mono text-xl font-black">01121898023</p>
+                </div>
+                <div class="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 rounded-2xl">
+                    <i class="fas fa-mobile-alt text-4xl text-orange-600 mb-3"></i>
+                    <h4 class="font-bold text-lg mb-2">Orange Cash</h4>
+                    <p class="font-mono text-xl font-black">01121898023</p>
+                </div>
+            </div>
+            <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-center">
+                <p class="text-gray-700 dark:text-gray-300">
+                    <i class="fas fa-info-circle text-blue-500"></i>
+                    <span data-i18n="payment_note">بعد التحويل، تواصل معنا على الواتساب مع رقم العملية للتفعيل الفوري</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="max-w-4xl mx-auto mt-16">
+            <h3 class="text-3xl font-black text-center mb-8 text-white" data-i18n="faq">الأسئلة الشائعة</h3>
+            <div class="space-y-4">
+                <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl p-6 shadow-lg">
+                    <h4 class="font-bold text-lg mb-2" data-i18n="q1">هل يمكنني إلغاء الاشتراك؟</h4>
+                    <p class="text-gray-600 dark:text-gray-400" data-i18n="a1">نعم، يمكنك الإلغاء في أي وقت من الإعدادات بدون أي رسوم إضافية.</p>
+                </div>
+                <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl p-6 shadow-lg">
+                    <h4 class="font-bold text-lg mb-2" data-i18n="q2">هل بياناتي آمنة؟</h4>
+                    <p class="text-gray-600 dark:text-gray-400" data-i18n="a2">نعم، نستخدم Firebase من Google مع تشفير كامل وحماية متقدمة.</p>
+                </div>
+                <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl p-6 shadow-lg">
+                    <h4 class="font-bold text-lg mb-2" data-i18n="q3">كم يستغرق التفعيل؟</h4>
+                    <p class="text-gray-600 dark:text-gray-400" data-i18n="a3">التفعيل فوري خلال 5 دقائق من إرسال رقم العملية على الواتساب.</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script src="app.js"></script>
-    <script>initPricing();</script>
+    <script>
+        const translations = {
+            ar: {
+                login: "تسجيل الدخول", hero_title: "اختر الخطة المناسبة لك", hero_subtitle: "مدير مصاريفك الذكي بالـ AI - وفر فلوسك ووقتك",
+                monthly: "شهري", yearly: "سنوي", save_50: "وفر 50 ج.م", free: "مجاني", for_beginners: "للمبتدئين", forever: "/للأبد",
+                feat_50: "50 معاملة/شهر", feat_reports: "تقارير أساسية", feat_chart: "رسوم بيانية", no_ai: "بدون AI", no_export: "بدون تصدير",
+                current_plan: "خطتك الحالية", popular: "الأكثر شعبية", for_pro: "للمحترفين", per_month: "/شهر", unlimited: "معاملات غير محدودة",
+                basic_ai: "AI أساسي - تحليل مصاريف", export_all: "تصدير Excel/PDF", invoices: "رفع فواتير وصور", budget_alert: "تنبيهات الميزانية",
+                categories: "فئات مخصصة", choose_pro: "اختر Pro", for_max: "للمحترفين جداً", all_pro_features: "كل مميزات Pro",
+                gpt4: "AI متقدم GPT-4", predictive: "تحليل تنبؤي للمصاريف", smart_saving: "نصائح توفير ذكية", priority_support: "دعم أولوية 24/7",
+                api_access: "وصول API", choose_max: "اختر Max", payment_methods: "طرق الدفع", payment_note: "بعد التحويل، تواصل معنا على الواتساب مع رقم العملية للتفعيل الفوري",
+                faq: "الأسئلة الشائعة", q1: "هل يمكنني إلغاء الاشتراك؟", a1: "نعم، يمكنك الإلغاء في أي وقت من الإعدادات بدون أي رسوم إضافية.",
+                q2: "هل بياناتي آمنة؟", a2: "نعم، نستخدم Firebase من Google مع تشفير كامل وحماية متقدمة.",
+                q3: "كم يستغرق التفعيل؟", a3: "التفعيل فوري خلال 5 دقائق من إرسال رقم العملية على الواتساب.",
+                currency_symbol: "ج.م", start_free: "ابدأ مجاناً"
+            },
+            en: {
+                login: "Login", hero_title: "Choose the Right Plan for You", hero_subtitle: "Your Smart AI Expense Manager - Save Money & Time",
+                monthly: "Monthly", yearly: "Yearly", save_50: "Save 50 EGP", free: "Free", for_beginners: "For Beginners", forever: "/Forever",
+                feat_50: "50 transactions/month", feat_reports: "Basic Reports", feat_chart: "Charts", no_ai: "No AI", no_export: "No Export",
+                current_plan: "Current Plan", popular: "Most Popular", for_pro: "For Professionals", per_month: "/month", unlimited: "Unlimited Transactions",
+                basic_ai: "Basic AI - Expense Analysis", export_all: "Export Excel/PDF", invoices: "Upload Invoices", budget_alert: "Budget Alerts",
+                categories: "Custom Categories", choose_pro: "Choose Pro", for_max: "For Experts", all_pro_features: "All Pro Features",
+                gpt4: "Advanced AI GPT-4", predictive: "Predictive Analysis", smart_saving: "Smart Saving Tips", priority_support: "24/7 Priority Support",
+                api_access: "API Access", choose_max: "Choose Max", payment_methods: "Payment Methods", payment_note: "After transfer, contact us on WhatsApp with transaction number for instant activation",
+                faq: "FAQ", q1: "Can I cancel subscription?", a1: "Yes, you can cancel anytime from settings with no extra fees.",
+                q2: "Is my data safe?", a2: "Yes, we use Google Firebase with full encryption and advanced protection.",
+                q3: "How long does activation take?", a3: "Activation is instant within 5 minutes of sending transaction number on WhatsApp.",
+                currency_symbol: "EGP", start_free: "Start Free"
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'ar';
+        
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            document.getElementById('htmlRoot').lang = lang;
+            document.getElementById('htmlRoot').dir = lang === 'ar'? 'rtl' : 'ltr';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+        }
+
+        document.getElementById('billingToggle').addEventListener('change', (e) => {
+            const isYearly = e.target.checked;
+            document.getElementById('proPrice').textContent = isYearly? '275' : '25';
+            document.getElementById('maxPrice').textContent = isYearly? '550' : '50';
+            document.getElementById('proPeriod').textContent = isYearly? '/year' : '/month';
+            document.getElementById('maxPeriod').textContent = isYearly? '/year' : '/month';
+        });
+
+        function selectPlan(plan) {
+            const isYearly = document.getElementById('billingToggle').checked;
+            const price = plan === 'pro'? (isYearly? 275 : 25) : (isYearly? 550 : 50);
+            alert(`للاشتراك في ${plan.toUpperCase()} ${isYearly? 'سنوي' : 'شهري'}:\n\nحول ${price} ج.م على:\n📱 01121898023\n\nثم أرسل رقم العملية على الواتساب للتفعيل الفوري`);
+        }
+
+        // Initialize
+        setLang(currentLang);
+        document.getElementById('langSelect').value = currentLang;
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+    </script>
 </body>
 </html>
