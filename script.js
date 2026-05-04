@@ -45,8 +45,8 @@ let doughnut = null, payment = null, line = null, editIndex = -1;
 
 // ✅ رقمك بتاع اتصالات كاش
 const YOUR_ETISALAT_NUMBER = "01121898023";
-// ✅ كود الماستر بتاعك - غيره لو عايز
-const MASTER_ADMIN_CODE = "ABDALLAH2026";
+// ✅ كود الماستر الجديد بتاعك
+const MASTER_ADMIN_CODE = "abdallah111$";
 
 function encodePass(pass) {
     return btoa(encodeURIComponent(pass));
