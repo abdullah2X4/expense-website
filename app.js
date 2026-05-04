@@ -21,6 +21,7 @@ let isAdmin = false;
 let currentLang = localStorage.getItem('lang') || 'ar';
 let currentCurrency = localStorage.getItem('currency') || 'EGP';
 let exchangeRate = 50;
+let monthlyBudget = 0;
 
 const PAYMENT_INFO = {
     number: "01121898023",
@@ -76,6 +77,13 @@ const LANG = {
         egyptian: 'جنيه مصري', dollar: 'دولار أمريكي',
         now: 'الآن', month: 'شهر', year: 'سنة',
         user: 'المستخدم', email: 'الإيميل', upgrade: 'ترقية 🚀',
+        settings: 'الإعدادات ⚙️', budget: 'الميزانية 💰',
+        budgetTitle: 'الميزانية الشهرية 💰', budgetAmountLabel: 'حدد ميزانيتك الشهرية',
+        saveBudget: 'حفظ الميزانية', clearBudget: 'إلغاء الميزانية',
+        budgetSaved: 'تم حفظ الميزانية ✅', budgetCleared: 'تم إلغاء الميزانية',
+        budgetExceeded: '⚠️ تجاوزت الميزانية!', budgetWarning: '⚠️ اقتربت من الميزانية',
+        budgetLabel: 'الميزانية الشهرية', settingsTitle: 'الإعدادات ⚙️',
+        languageLabel: 'اللغة', currencyLabel: 'العملة',
         prediction: 'بناءً على مصاريفك الحالية، أتوقع الشهر الجاي هتصرف حوالي',
         willSpend: 'هتصرف', ifContinue: 'لو كملت بنفس المعدل. تقدر توفر لو قللت',
         save: 'وفر', savingPlan: 'خطة توفير مخصصة لك:\n• قلل',
@@ -134,6 +142,13 @@ const LANG = {
         egyptian: 'Egyptian Pound', dollar: 'US Dollar',
         now: 'Now', month: 'month', year: 'year',
         user: 'User', email: 'Email', upgrade: 'Upgrade 🚀',
+        settings: 'Settings ⚙️', budget: 'Budget 💰',
+        budgetTitle: 'Monthly Budget 💰', budgetAmountLabel: 'Set your monthly budget',
+        saveBudget: 'Save Budget', clearBudget: 'Clear Budget',
+        budgetSaved: 'Budget saved ✅', budgetCleared: 'Budget cleared',
+        budgetExceeded: '⚠️ Budget exceeded!', budgetWarning: '⚠️ Near budget limit',
+        budgetLabel: 'Monthly Budget', settingsTitle: 'Settings ⚙️',
+        languageLabel: 'Language', currencyLabel: 'Currency',
         prediction: 'Based on your current expenses, I predict next month you will spend around',
         willSpend: 'You will spend', ifContinue: 'if you continue at the same rate. You can save if you reduce',
         save: 'Save', savingPlan: 'Custom saving plan for you:\n• Reduce',
@@ -181,21 +196,77 @@ function toggleCurrency() {
     location.reload();
 }
 
+function toggleSettings() {
+    document.getElementById('settingsModal').classList.toggle('active');
+    if (document.getElementById('settingsModal').classList.contains('active')) {
+        document.getElementById('langBtn').textContent = currentLang === 'ar'? t('english') : t('arabic');
+        document.getElementById('currencyBtn').textContent = currentCurrency === 'EGP'? `$ ${t('dollar')}` : `ج.م ${t('egyptian')}`;
+    }
+}
+
+function toggleBudget() {
+    document.getElementById('budgetModal').classList.toggle('active');
+    if (document.getElementById('budgetModal').classList.contains('active') && monthlyBudget > 0) {
+        document.getElementById('budgetInput').value = monthlyBudget;
+    }
+}
+
+async function saveBudget() {
+    const budget = parseFloat(document.getElementById('budgetInput').value);
+    if (!budget || budget <= 0) return alert(t('fillFields'));
+
+    monthlyBudget = budget;
+    await db.collection('users').doc(currentUser.uid).update({ monthlyBudget: budget });
+    toggleBudget();
+    updateBudgetBar();
+    alert(t('budgetSaved'));
+}
+
+async function clearBudget() {
+    monthlyBudget = 0;
+    await db.collection('users').doc(currentUser.uid).update({ monthlyBudget: 0 });
+    toggleBudget();
+    document.getElementById('budgetBarContainer').classList.add('hidden');
+    alert(t('budgetCleared'));
+}
+
+function updateBudgetBar() {
+    if (monthlyBudget <= 0) {
+        document.getElementById('budgetBarContainer').classList.add('hidden');
+        return;
+    }
+
+    const monthTotal = transactions.filter(tr => {
+        const d = tr.createdAt?.toDate();
+        const now = new Date();
+        return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).reduce((sum, tr) => sum + tr.amount, 0);
+
+    const percentage = Math.min((monthTotal / monthlyBudget) * 100, 100);
+    document.getElementById('budgetFill').style.width = percentage + '%';
+    document.getElementById('budgetText').textContent = `${formatAmount(monthTotal)} / ${formatAmount(monthlyBudget)}`;
+    document.getElementById('budgetBarContainer').classList.remove('hidden');
+
+    if (percentage >= 100) {
+        document.getElementById('budgetText').textContent += ` ${t('budgetExceeded')}`;
+    } else if (percentage >= 80) {
+        document.getElementById('budgetText').textContent += ` ${t('budgetWarning')}`;
+    }
+}
+
 function applyLang() {
     document.documentElement.lang = t('lang');
     document.documentElement.dir = t('dir');
-    const ids = ['appName', 'logo', 'totalExpenseLabel', 'totalCountLabel', 'monthTotalLabel', 'addExpenseTitle', 'addBtn', 'aiAnalyzeBtn', 'chartTitle', 'exportBtn', 'lastTransactionsTitle', 'logoutBtn', 'aiTitle', 'sendBtn', 'adminTitle', 'adminEnterBtn', 'adminCancelBtn', 'langBtn', 'currencyBtn', 'amount', 'category', 'description', 'aiInput', 'adminPass', 'upgradeBtn'];
+    const ids = ['appName', 'logo', 'totalExpenseLabel', 'totalCountLabel', 'monthTotalLabel', 'addExpenseTitle', 'addBtn', 'aiAnalyzeBtn', 'chartTitle', 'exportBtn', 'lastTransactionsTitle', 'logoutBtn', 'aiTitle', 'sendBtn', 'adminTitle', 'adminEnterBtn', 'adminCancelBtn', 'upgradeBtn', 'settingsTitle', 'languageLabel', 'currencyLabel', 'budgetTitle', 'budgetAmountLabel', 'saveBudgetBtn', 'clearBudgetBtn', 'budgetLabel', 'amount', 'category', 'description', 'aiInput', 'adminPass'];
     ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            if (id === 'langBtn') el.textContent = currentLang === 'ar'? 'EN' : 'ع';
-            else if (id === 'currencyBtn') el.textContent = currentCurrency === 'EGP'? '$' : 'ج.م';
-            else if (id === 'amount') el.placeholder = t('amount');
+            if (id === 'amount') el.placeholder = t('amount');
             else if (id === 'category') el.placeholder = t('category');
             else if (id === 'description') el.placeholder = t('description');
             else if (id === 'aiInput') el.placeholder = t('askAI');
             else if (id === 'adminPass') el.placeholder = t('password');
-            else if (id === 'upgradeBtn') el.textContent = t('upgrade');
+            else if (id === 'budgetInput') el.placeholder = currentLang === 'ar'? '5000' : '5000';
             else el.textContent = t(id.replace('Label', '').replace('Title', '').replace('Btn', ''));
         }
     });
@@ -214,7 +285,7 @@ function initLogin() {
             if (!userDoc.exists) {
                 await db.collection('users').doc(user.uid).set({
                     email: user.email, displayName: user.displayName, photoURL: user.photoURL,
-                    plan: null, planExpiry: null, currency: currentCurrency,
+                    plan: null, planExpiry: null, currency: currentCurrency, monthlyBudget: 0,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 window.location.href = 'pricing.html';
@@ -309,6 +380,7 @@ function initApp() {
         userPlan = userData.plan;
         planExpiry = userData.planExpiry;
         if (userData.currency) currentCurrency = userData.currency;
+        if (userData.monthlyBudget) monthlyBudget = userData.monthlyBudget;
 
         if (planExpiry && planExpiry.toDate() < new Date() && userPlan!== 'free') {
             await db.collection('users').doc(user.uid).update({ plan: 'free', planExpiry: null });
@@ -352,6 +424,7 @@ function loadTransactions() {
             return dateB - dateA;
         });
         updateUI();
+        updateBudgetBar();
     });
 }
 
@@ -562,10 +635,15 @@ async function sendAIMessage() {
             const pred = monthTotal / new Date().getDate() * 30;
             response = `${t('prediction')} ${formatAmount(pred)}\n${t('willSpend')} ${formatAmount(pred)} ${t('ifContinue')} ${topCategory} ${currentLang === 'ar'? 'بنسبة 15%' : 'by 15%'} ${t('save')} ${formatAmount(categories[topCategory] * 0.15)}`;
         } else if (msg.includes('خطة') || msg.includes('توفير') || msg.toLowerCase().includes('plan') || msg.toLowerCase().includes('saving')) {
-            response = `${t('savingPlan')} ${topCategory}: ${t('save')} ${formatAmount(categories[topCategory] * 0.2)}${t('savePerMonth')} ${formatAmount(monthTotal/30)}\n${t('checkAbove')} ${formatAmount(avg*2)}\n\n${t('ifCommit')} ${formatAmount(total*0.15)} ${t('monthly')} ${formatAmount(total*0.15*12)} ${t('yearly')}`;
+response = `${t('savingPlan')} ${topCategory}: ${t('save')} ${formatAmount(categories[topCategory] * 0.2)}${t('savePerMonth')} ${formatAmount(monthTotal/30)}\n${t('checkAbove')} ${formatAmount(avg*2)}\n\n${t('ifCommit')} ${formatAmount(total*0.15)} ${t('monthly')} ${formatAmount(total*0.15*12)} ${t('yearly')}`;
         } else if (msg.includes('تحليل') || msg.includes('ملخص') || msg.toLowerCase().includes('analysis') || msg.toLowerCase().includes('summary')) {
             response = `${t('fullAnalysis')} ${formatAmount(total)}\n• ${t('thisMonth')}: ${formatAmount(monthTotal)}\n• ${t('topCategory')} ${topCategory} - ${formatAmount(categories[topCategory] || 0)}\n• ${t('avgTransaction')} ${formatAmount(avg)}\n• ${t('transactionCount')} ${transactions.length}\n\n${t('warning')} ${topCategory} ${t('takes')} ${((categories[topCategory]/total)*100).toFixed(1)}${t('ofExpenses')}`;
-        } else {
+ 
+
+
+
+
+       } else {
             response = `${t('vipResponse')} "${msg}"\n\n${t('basedOn')} ${transactions.length} ${t('transactions')} ${formatAmount(total)}\n${t('topItem')} ${topCategory} - ${formatAmount(categories[topCategory] || 0)}\n\n${t('whatElse')}`;
         }
 
@@ -581,4 +659,4 @@ function aiAnalyze() {
         document.getElementById('aiInput').value = t('fullAnalysisPlan');
         sendAIMessage();
     }, 500);
-}
+}       
