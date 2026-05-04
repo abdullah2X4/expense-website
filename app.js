@@ -78,14 +78,14 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     await loadSettings();
     applyTheme();
-    if (window.location.pathname.includes('login.html')) {
+    if (window.location.pathname.includes('login')) {
       window.location.href = 'index.html';
     } else {
       loadExpenses();
       renderSettingsModal();
     }
   } else {
-    if (!window.location.pathname.includes('login.html')) {
+    if (!window.location.pathname.includes('login')) {
       window.location.href = 'login.html';
     }
   }
