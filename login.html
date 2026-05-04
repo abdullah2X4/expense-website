@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مصاريفي V6 - تسجيل الدخول</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>body{font-family:'Cairo',sans-serif}</style>
+</head>
+<body class="bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white/95 backdrop-blur-lg p-8 rounded-3xl shadow-2xl w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">💎</div>
+            <h1 class="text-4xl font-black text-gray-800 mb-2">مصاريفي V6</h1>
+            <p class="text-gray-500">إدارة أموالك بذكاء واحترافية</p>
+        </div>
+        
+        <button id="googleLogin" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 hover:border-violet-500 py-4 rounded-xl font-bold text-gray-700 transition-all hover:shadow-lg hover:-translate-y-0.5">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6">
+            المتابعة باستخدام جوجل
+        </button>
+        
+        <div id="loader" class="hidden mt-4 text-center text-violet-600 font-semibold">جاري التحميل...</div>
+        <div id="error" class="hidden mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBS3FCovS0Ln0qGWSIOxoL3kiKe5njk1lk",
+            authDomain: "masarefy-v6.firebaseapp.com",
+            projectId: "masarefy-v6",
+            storageBucket: "masarefy-v6.firebasestorage.app",
+            messagingSenderId: "362855388821",
+            appId: "1:362855388821:web:6bc34c416c520f60102d9c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userRef = doc(db, 'users', user.uid);
+                const userSnap = await getDoc(userRef);
+                
+                if (!userSnap.exists()) {
+                    await setDoc(userRef, {
+                        name: user.displayName,
+                        email: user.email,
+                        plan: 'free',
+                        transactions_count: 0,
+                        created_at: new Date()
+                    });
+                    window.location.href = 'pricing.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }
+        });
+
+        document.getElementById('googleLogin').onclick = async () => {
+            document.getElementById('loader').classList.remove('hidden');
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (e) {
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('error').textContent = 'خطأ: ' + e.message;
+            }
+        };
+    </script>
+</body>
+</html>
