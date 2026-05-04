@@ -1,4 +1,4 @@
-// ===== Masarefy V6.1 Pro - Full Fixed Version =====
+// ===== Masarefy V6.2 Pro - Full Fixed Version =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, getDoc, setDoc, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
@@ -35,6 +35,16 @@ let adminClicks = 0;
 const currencyRates = { EGP: 1, USD: 0.020, EUR: 0.019, SAR: 0.076, AED: 0.074 };
 const currencySymbols = { EGP: 'ج.م', USD: '$', EUR: '€', SAR: 'ر.س', AED: 'د.إ' };
 
+const translations = {
+  ar: { upgrade: "ترقية", upgrade_to_pro: "ترقية لـ Pro", upgrade_to_max: "ترقية لـ Max" },
+  en: { upgrade: "Upgrade", upgrade_to_pro: "Upgrade to Pro", upgrade_to_max: "Upgrade to Max" },
+  fr: { upgrade: "Mettre à niveau", upgrade_to_pro: "Passer à Pro", upgrade_to_max: "Passer à Max" },
+  de: { upgrade: "Upgrade", upgrade_to_pro: "Auf Pro upgraden", upgrade_to_max: "Auf Max upgraden" },
+  es: { upgrade: "Actualizar", upgrade_to_pro: "Actualizar a Pro", upgrade_to_max: "Actualizar a Max" }
+};
+
+function t(key) { return translations[currentLang]?.[key] || key; }
+
 // ===== Helpers =====
 function formatCurrency(amount) {
   const converted = amount * currencyRates[currentCurrency];
@@ -51,8 +61,7 @@ function hideModal(id) {
 
 function setTheme(theme) {
   if (theme === 'dark') document.documentElement.classList.add('dark');
-  else if (theme === 'light') document.documentElement.classList.remove('dark');
-  else document.documentElement.classList.toggle('dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
+  else document.documentElement.classList.remove('dark');
   localStorage.setItem('theme', theme);
 }
 
@@ -63,61 +72,63 @@ if (window.location.pathname.includes('login')) {
       try {
         await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
         window.location.href = 'index.html';
-      } catch (error) { 
-        alert('خطأ: ' + error.code); 
+      } catch (error) {
+        alert('خطأ: ' + error.code);
       }
     });
-    
+
     document.getElementById('googleBtn')?.addEventListener('click', async () => {
       try {
         await signInWithPopup(auth, new GoogleAuthProvider());
         window.location.href = 'index.html';
-      } catch (error) { 
-        alert('خطأ: ' + error.code); 
+      } catch (error) {
+        alert('خطأ: ' + error.code);
       }
     });
   });
-  
-  onAuthStateChanged(auth, user => { 
-    if (user) window.location.href = 'index.html'; 
+
+  onAuthStateChanged(auth, user => {
+    if (user) window.location.href = 'index.html';
   });
 }
 
 // ===== Main Dashboard =====
-if (window.location.pathname.includes('index') || window.location.pathname === '/' || window.location.pathname.endsWith('/expense-website/')) {
-  
+if (window.location.pathname.includes('index') || window.location.pathname === '/' || window.location.pathname.endsWith('/expense-website/') || window.location.pathname.endsWith('/expense-website/index.html')) {
+
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Loaded - Setting up event listeners');
+
     // Initialize
     document.getElementById('monthFilter').value = selectedMonth;
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
-    
-    // Event Listeners - كل الأزرار هنا
+
+    // All Event Listeners
     document.getElementById('langSelect').value = currentLang;
     document.getElementById('currencySelect').value = currentCurrency;
-    
+
     document.getElementById('langSelect').addEventListener('change', e => {
       currentLang = e.target.value;
       localStorage.setItem('lang', currentLang);
       location.reload();
     });
-    
+
     document.getElementById('currencySelect').addEventListener('change', e => {
       currentCurrency = e.target.value;
       localStorage.setItem('currency', currentCurrency);
       updateUI();
     });
-    
+
     document.getElementById('monthFilter').addEventListener('change', e => {
       selectedMonth = e.target.value;
-      filterByMonth();
+      updateUI();
     });
-    
+
     document.getElementById('clearFilterBtn').addEventListener('click', () => {
       selectedMonth = new Date().toISOString().slice(0, 7);
       document.getElementById('monthFilter').value = selectedMonth;
-      filterByMonth();
+      updateUI();
     });
-    
+
     document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'login.html'));
     document.getElementById('settingsBtn').addEventListener('click', () => showModal('settingsModal'));
     document.getElementById('closeSettingsBtn').addEventListener('click', () => hideModal('settingsModal'));
@@ -130,7 +141,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     document.getElementById('lightThemeBtn').addEventListener('click', () => setTheme('light'));
     document.getElementById('darkThemeBtn').addEventListener('click', () => setTheme('dark'));
     document.getElementById('adminTriggerBtn').addEventListener('click', handleAdminClick);
-    
+
     // AI Enter key
     document.getElementById('aiInput').addEventListener('keypress', e => {
       if (e.key === 'Enter') askAI();
@@ -141,7 +152,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     if (!user) return window.location.href = 'login.html';
     currentUser = user;
     document.getElementById('userEmail').textContent = user.email;
-    
+
     // Get user data
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     if (userDoc.exists()) {
@@ -149,14 +160,14 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       monthlyBudget = userDoc.data().monthlyBudget || 0;
       document.getElementById('monthlyBudgetInput').value = monthlyBudget;
     } else {
-      await setDoc(doc(db, 'users', user.uid), { 
+      await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
-        plan: 'free', 
+        plan: 'free',
         monthlyBudget: 0,
-        createdAt: Timestamp.now() 
+        createdAt: Timestamp.now()
       });
     }
-    
+
     updatePlanBadge();
     updateUpgradeButton();
     initDashboard(user);
@@ -172,14 +183,14 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
   function updateUpgradeButton() {
     const upgradeBtn = document.getElementById("upgradeBtn");
     if (!upgradeBtn) return;
-    
+
     if (userPlan === "free") {
       upgradeBtn.classList.remove("hidden");
       upgradeBtn.onclick = () => showModal('settingsModal');
-      upgradeBtn.innerHTML = `<span class="emoji">👑</span> <span class="hidden md:inline">ترقية لـ Pro</span>`;
+      upgradeBtn.innerHTML = `<span class="emoji">👑</span> <span class="hidden md:inline">${t('upgrade_to_pro')}</span>`;
     } else if (userPlan === "pro") {
       upgradeBtn.classList.remove("hidden");
-      upgradeBtn.innerHTML = `<span class="emoji">⭐</span> <span class="hidden md:inline">ترقية لـ Max</span>`;
+      upgradeBtn.innerHTML = `<span class="emoji">⭐</span> <span class="hidden md:inline">${t('upgrade_to_max')}</span>`;
       upgradeBtn.onclick = () => showModal('settingsModal');
     } else {
       upgradeBtn.classList.add("hidden");
@@ -188,15 +199,17 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
 
   function initDashboard(user) {
     const addBtn = document.getElementById("addBtn");
-    
+
     addBtn?.addEventListener("click", async () => {
+      console.log('Add button clicked');
+
       // Check limit for free plan
       if (userPlan === 'free' && transactions.length >= 50) {
         alert('وصلت للحد الأقصى 50 معاملة. رقي حسابك لـ Pro! 💎');
         showModal('settingsModal');
         return;
       }
-      
+
       const amount = parseFloat(document.getElementById("amount").value);
       if (!amount || amount <= 0) {
         alert('اكتب مبلغ صحيح ❌');
@@ -209,16 +222,16 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       try {
         const file = document.getElementById('invoiceFile').files[0];
         let invoiceUrl = '';
-        
+
         if (file && userPlan!== 'free') {
           const storageRef = ref(storage, `invoices/${user.uid}/${Date.now()}_${file.name}`);
           await uploadBytes(storageRef, file);
           invoiceUrl = await getDownloadURL(storageRef);
         }
-        
+
         const categoryText = document.getElementById("category").value;
-        const category = categoryText.replace(/<span class="emoji">.*?<\/span>\s*/, '').trim();
-        
+        const category = categoryText.replace(/🍔|🚗|📱|🎮|💊|💼|🛍️|📚|📌/g, '').trim();
+
         const data = {
           userId: user.uid,
           type: document.getElementById("type").value,
@@ -229,25 +242,29 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
           createdAt: Timestamp.now()
         };
 
+        console.log('Adding transaction:', data);
+
         if (editingId) {
           await updateDoc(doc(db, "transactions", editingId), data);
           editingId = null;
-          addBtn.innerHTML = '<span class="emoji">✨</span> إضافة';
         } else {
           await addDoc(collection(db, "transactions"), data);
         }
-        
+
         // Clear form
         document.getElementById("amount").value = "";
         document.getElementById("note").value = "";
         document.getElementById("invoiceFile").value = "";
-        
+
         addBtn.innerHTML = '<span class="emoji">✅</span> تم!';
         setTimeout(() => {
           addBtn.innerHTML = '<span class="emoji">✨</span> إضافة';
         }, 2000);
-        
+
+        console.log('Transaction added successfully');
+
       } catch (error) {
+        console.error('Error adding transaction:', error);
         alert("خطأ: " + error.message);
         addBtn.innerHTML = '<span class="emoji">✨</span> إضافة';
       } finally {
@@ -257,20 +274,19 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
 
     // Load transactions with real-time sync
     const q = query(
-      collection(db, "transactions"), 
-      where("userId", "==", user.uid), 
+      collection(db, "transactions"),
+      where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
-    
-    onSnapshot(q, (snapshot) => {
-      transactions = snapshot.docs.map(doc => ({ id: doc.id,...doc.data() }));
-      filterByMonth();
-      checkBudgetWarning();
-    });
-  }
 
-  function filterByMonth() {
-    updateUI();
+    onSnapshot(q, (snapshot) => {
+      console.log('Transactions loaded:', snapshot.docs.length);
+      transactions = snapshot.docs.map(doc => ({ id: doc.id,...doc.data() }));
+      updateUI();
+      checkBudgetWarning();
+    }, (error) => {
+      console.error('Error loading transactions:', error);
+    });
   }
 
   function updateUI() {
@@ -281,23 +297,23 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     transactions.forEach(t => {
       const date = t.createdAt.toDate();
       const monthKey = date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long' });
-      
+
       if (t.type === "income") {
         totalIncome += t.amount;
       } else {
         totalExpenses += t.amount;
         categoryData[t.category] = (categoryData[t.category] || 0) + t.amount;
-        
+
         if (date.toISOString().slice(0, 7) === selectedMonth) {
           monthExpenses += t.amount;
         }
       }
-      
+
       monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (t.type === "expense"? t.amount : -t.amount);
     });
 
     const balance = totalIncome - totalExpenses;
-    
+
     document.getElementById("totalIncome").textContent = formatCurrency(totalIncome);
     document.getElementById("totalExpenses").textContent = formatCurrency(totalExpenses);
     document.getElementById("balance").textContent = formatCurrency(balance);
@@ -309,8 +325,8 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       return date.toISOString().slice(0, 7) === selectedMonth;
     });
 
-    document.getElementById("transactionsList").innerHTML = monthTransactions.length === 0 
-    ? '<div class="text-center text-gray-500 py-8"><span class="emoji text-6xl">📭</span><p class="mt-4">لا توجد معاملات في هذا الشهر</p></div>'
+    document.getElementById("transactionsList").innerHTML = monthTransactions.length === 0
+  ? '<div class="text-center text-gray-500 py-8"><span class="emoji text-6xl">📭</span><p class="mt-4">لا توجد معاملات في هذا الشهر</p></div>'
       : monthTransactions.map(t => `
         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl animate-slide-up">
           <div class="flex items-center gap-3">
@@ -359,18 +375,18 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     if (expenseChart) expenseChart.destroy();
     expenseChart = new Chart(ctx, {
       type: "doughnut",
-      data: { 
-        labels: Object.keys(data), 
-        datasets: [{ 
-          data: Object.values(data), 
-          backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6"] 
-        }] 
+      data: {
+        labels: Object.keys(data),
+        datasets: [{
+          data: Object.values(data),
+          backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6"]
+        }]
       },
-      options: { 
-        responsive: true, 
-        plugins: { 
-          legend: { position: "bottom" } 
-        } 
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom" }
+        }
       }
     });
   }
@@ -383,10 +399,10 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       type: "line",
       data: {
         labels: Object.keys(data).slice(-6),
-        datasets: [{ 
-          label: 'المصروفات', 
-          data: Object.values(data).slice(-6), 
-          borderColor: '#ef4444', 
+        datasets: [{
+          label: 'المصروفات',
+          data: Object.values(data).slice(-6),
+          borderColor: '#ef4444',
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
           tension: 0.4,
           fill: true
@@ -402,13 +418,13 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       warning.innerHTML = '';
       return;
     }
-    
+
     const monthExpenses = transactions
-     .filter(t => t.type === 'expense' && t.createdAt.toDate().toISOString().slice(0, 7) === selectedMonth)
-     .reduce((sum, t) => sum + t.amount, 0);
-    
+   .filter(t => t.type === 'expense' && t.createdAt.toDate().toISOString().slice(0, 7) === selectedMonth)
+   .reduce((sum, t) => sum + t.amount, 0);
+
     const percent = (monthExpenses / monthlyBudget * 100).toFixed(0);
-    
+
     if (percent >= 100) {
       warning.innerHTML = `<div class="bg-red-100 dark:bg-red-900/30 border-2 border-red-500 text-red-800 dark:text-red-200 p-4 rounded-2xl animate-scale-in"><span class="emoji text-2xl">🚨</span> <strong>تجاوزت الميزانية!</strong> صرفت ${percent}% من ميزانيتك</div>`;
     } else if (percent >= 80) {
@@ -422,7 +438,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
   window.saveBudget = async () => {
     const budget = parseFloat(document.getElementById('monthlyBudgetInput').value);
     if (!budget || budget < 0) return alert('اكتب ميزانية صحيحة');
-    
+
     await updateDoc(doc(db, 'users', currentUser.uid), { monthlyBudget: budget });
     monthlyBudget = budget;
     hideModal('budgetModal');
@@ -439,25 +455,25 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     }
     showModal('aiModal');
     document.getElementById('aiBadge').textContent = userPlan === 'max'? 'GPT-4' : 'Basic';
-    document.getElementById('aiBadge').className = userPlan === 'max'? 'max-gradient px-3 py-1' : 'pro-gradient px-3 py-1';
+    document.getElementById('aiBadge').className = userPlan === 'max'? 'max-gradient px-3 py-1 rounded-full text-xs' : 'pro-gradient px-3 py-1 rounded-full text-xs';
   };
 
   window.askAI = async () => {
     const input = document.getElementById('aiInput').value.trim();
     if (!input) return;
-    
+
     const chat = document.getElementById('aiChat');
     chat.innerHTML += `<div class="text-right"><div class="inline-block bg-blue-500 text-white px-4 py-2 rounded-2xl">${input}</div></div>`;
     document.getElementById('aiInput').value = '';
-    
+
     // AI Response
     const totalExp = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const avgExp = totalExp / transactions.length || 0;
-    const topCategory = Object.entries(transactions.reduce((acc, t) => { 
-      if(t.type==='expense') acc[t.category]=(acc[t.category]||0)+t.amount; 
-      return acc; 
+    const topCategory = Object.entries(transactions.reduce((acc, t) => {
+      if(t.type==='expense') acc[t.category]=(acc[t.category]||0)+t.amount;
+      return acc;
     }, {})).sort((a,b)=>b[1]-a[1])[0];
-    
+
     let response = '';
     if (userPlan === 'max') {
       response = `<strong>تحليل GPT-4 المتقدم 🤖</strong><br><br>`;
@@ -473,7 +489,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       response += `المتوسط: ${formatCurrency(avgExp)}<br><br>`;
       response += `💡 نصيحة: حدد ميزانية شهرية وتابع مصاريفك يومياً`;
     }
-    
+
     setTimeout(() => {
       chat.innerHTML += `<div class="text-left"><div class="inline-block bg-gray-200 dark:bg-gray-700 px-4 py-3 rounded-2xl">${response}</div></div>`;
       chat.scrollTop = chat.scrollHeight;
@@ -504,13 +520,13 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('email', '==', email));
     const snapshot = await getDocs(q);
-    
+
     if (!snapshot.empty) {
       const userDoc = snapshot.docs[0];
       const expiry = new Date();
       if (duration === 'yearly') expiry.setFullYear(expiry.getFullYear() + 1);
       else expiry.setMonth(expiry.getMonth() + 1);
-      
+
       await updateDoc(doc(db, 'users', userDoc.id), {
         plan,
         planExpiry: Timestamp.fromDate(expiry),

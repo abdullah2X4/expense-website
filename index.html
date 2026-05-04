@@ -7,40 +7,59 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-        tailwind.config = { 
+        tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-in-out',
-                        'slide-up': 'slideUp 0.4s ease-out',
-                        'scale-in': 'scaleIn 0.3s ease-out'
-                    }
+                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] }
                 }
             }
         }
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-        body { font-family: 'Cairo', sans-serif; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-      .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); }
-      .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-      .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgb(0 0 0 / 0.2); }
-      .pro-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-      .max-gradient { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-      .emoji { font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
+        * { font-family: 'Cairo', sans-serif; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+       .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+       .animate-slide-up { animation: slideUp 0.4s ease-out; }
+       .animate-scale-in { animation: scaleIn 0.3s ease-out; }
+       .animate-pulse-slow { animation: pulse 2s infinite; }
+
+       .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); }
+       .dark.glass { background: rgba(31,41,55,0.8); }
+       .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+       .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgb(0 0 0 / 0.2); }
+       .pro-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+       .max-gradient { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+       .emoji { font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
+       .btn-animate:active { transform: scale(0.95); }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-gray-900 min-h-screen">
-    
+
     <!-- Navbar -->
-    <nav class="glass dark:bg-gray-800/80 text-gray-800 dark:text-white shadow-lg sticky top-0 z-40">
+    <nav class="glass dark:bg-gray-800/80 text-gray-800 dark:text-white shadow-lg sticky top-0 z-40 animate-fade-in">
         <div class="container mx-auto px-4 py-3">
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-3">
@@ -55,19 +74,19 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="upgradeBtn" class="hidden px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold hover:shadow-lg transition">
+                    <button id="upgradeBtn" class="hidden px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold hover:shadow-lg transition animate-pulse-slow">
                         <span class="emoji">👑</span> <span class="hidden md:inline">ترقية</span>
                     </button>
-                    <button id="budgetBtn" class="p-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:shadow-lg transition">
+                    <button id="budgetBtn" class="p-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:shadow-lg transition btn-animate">
                         <i class="fas fa-bullseye"></i>
                     </button>
-                    <button id="aiBtn" class="p-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg transition">
+                    <button id="aiBtn" class="p-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg transition btn-animate">
                         <i class="fas fa-robot"></i>
                     </button>
-                    <button id="settingsBtn" class="p-2 rounded-xl bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <button id="settingsBtn" class="p-2 rounded-xl bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition btn-animate">
                         <i class="fas fa-cog"></i>
                     </button>
-                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-3 py-2 rounded-xl text-white transition">
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-3 py-2 rounded-xl text-white transition btn-animate">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
@@ -77,7 +96,7 @@
 
     <!-- Settings Modal -->
     <div id="settingsModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h- overflow-y-auto animate-scale-in">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold flex items-center gap-2">
@@ -93,6 +112,9 @@
                         <select id="langSelect" class="w-full px-4 py-3 border-2 rounded-xl dark:bg-gray-700">
                             <option value="ar">🇪🇬 العربية</option>
                             <option value="en">🇺🇸 English</option>
+                            <option value="fr">🇫🇷 Français</option>
+                            <option value="de">🇩🇪 Deutsch</option>
+                            <option value="es">🇪🇸 Español</option>
                         </select>
                     </div>
                     <div>
@@ -102,15 +124,16 @@
                             <option value="USD">🇺🇸 دولار أمريكي</option>
                             <option value="EUR">🇪🇺 يورو</option>
                             <option value="SAR">🇸🇦 ريال سعودي</option>
+                            <option value="AED">🇦🇪 درهم إماراتي</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-2"><span class="emoji">🎨</span> المظهر</label>
                         <div class="grid grid-cols-2 gap-2">
-                            <button id="lightThemeBtn" class="p-3 border-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <button id="lightThemeBtn" class="p-3 border-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 btn-animate">
                                 <span class="emoji">☀️</span> فاتح
                             </button>
-                            <button id="darkThemeBtn" class="p-3 border-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <button id="darkThemeBtn" class="p-3 border-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 btn-animate">
                                 <span class="emoji">🌙</span> داكن
                             </button>
                         </div>
@@ -138,7 +161,7 @@
                 </div>
                 <div class="space-y-4">
                     <input type="number" id="monthlyBudgetInput" placeholder="0" class="w-full px-4 py-3 border-2 rounded-xl dark:bg-gray-700 text-2xl font-bold text-center">
-                    <button id="saveBudgetBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl font-bold hover:shadow-lg">
+                    <button id="saveBudgetBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl font-bold hover:shadow-lg btn-animate">
                         <span class="emoji">💾</span> حفظ
                     </button>
                 </div>
@@ -148,7 +171,7 @@
 
     <!-- AI Modal -->
     <div id="aiModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h- overflow-hidden animate-scale-in">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scale-in">
             <div class="p-6 border-b dark:border-gray-700 bg-gradient-to-r from-purple-500 to-pink-500 text-white">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold flex items-center gap-3">
@@ -172,7 +195,7 @@
             <div class="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
                 <div class="flex gap-2">
                     <input id="aiInput" type="text" placeholder="اسأل عن مصاريفك..." class="flex-1 px-4 py-3 border-2 rounded-xl dark:bg-gray-700">
-                    <button id="sendAiBtn" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:shadow-lg">
+                    <button id="sendAiBtn" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:shadow-lg btn-animate">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
@@ -183,13 +206,13 @@
     <!-- Main Content -->
     <div class="container mx-auto p-4 md:p-6 max-w-7xl">
         <div id="budgetWarning" class="mb-4"></div>
-        
+
         <!-- Filter -->
         <div class="glass dark:bg-gray-800/80 rounded-2xl shadow-lg p-4 mb-6 animate-fade-in">
             <div class="flex items-center gap-3">
                 <span class="emoji text-2xl">📅</span>
                 <input type="month" id="monthFilter" class="flex-1 px-4 py-3 border-2 rounded-xl dark:bg-gray-700 text-lg font-semibold">
-                <button id="clearFilterBtn" class="px-6 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600">
+                <button id="clearFilterBtn" class="px-6 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 btn-animate">
                     <span class="emoji">🔄</span> إعادة
                 </button>
             </div>
@@ -207,7 +230,6 @@
                         <span class="emoji text-2xl">📉</span>
                     </div>
                 </div>
-            </div>
             <div class="glass dark:bg-gray-800/80 rounded-2xl shadow-lg p-6 card-hover animate-slide-up" style="animation-delay: 0.1s">
                 <div class="flex items-center justify-between">
                     <div>
@@ -218,7 +240,6 @@
                         <span class="emoji text-2xl">📈</span>
                     </div>
                 </div>
-            </div>
             <div class="glass dark:bg-gray-800/80 rounded-2xl shadow-lg p-6 card-hover animate-slide-up" style="animation-delay: 0.2s">
                 <div class="flex items-center justify-between">
                     <div>
@@ -252,33 +273,33 @@
                     </h2>
                     <div class="space-y-4">
                         <select id="type" class="w-full px-4 py-3 border-2 rounded-xl dark:bg-gray-700 font-semibold">
-                            <option value="expense"><span class="emoji">💸</span> مصروف</option>
-                            <option value="income"><span class="emoji">💵</span> دخل</option>
+                            <option value="expense">💸 مصروف</option>
+                            <option value="income">💵 دخل</option>
                         </select>
                         <input id="amount" type="number" placeholder="المبلغ" class="w-full px-4 py-3 border-2 rounded-xl dark:bg-gray-700 text-xl font-bold">
                         <select id="category" class="w-full px-4 py-3 border-2 rounded-xl dark:bg-gray-700">
-                            <option><span class="emoji">🍔</span> طعام</option>
-                            <option><span class="emoji">🚗</span> مواصلات</option>
-                            <option><span class="emoji">📱</span> فواتير</option>
-                            <option><span class="emoji">🎮</span> ترفيه</option>
-                            <option><span class="emoji">💊</span> صحة</option>
-                            <option><span class="emoji">💼</span> راتب</option>
-                            <option><span class="emoji">🛍️</span> تسوق</option>
-                            <option><span class="emoji">📚</span> تعليم</option>
-                            <option><span class="emoji">📌</span> أخرى</option>
+                            <option>🍔 طعام</option>
+                            <option>🚗 مواصلات</option>
+                            <option>📱 فواتير</option>
+                            <option>🎮 ترفيه</option>
+                            <option>💊 صحة</option>
+                            <option>💼 راتب</option>
+                            <option>🛍️ تسوق</option>
+                            <option>📚 تعليم</option>
+                            <option>📌 أخرى</option>
                         </select>
                         <input id="note" type="text" placeholder="ملاحظة" class="w-full px-4 py-3 border-2 rounded-xl dark:bg-gray-700">
                         <div>
                             <label class="block text-sm font-semibold mb-2"><span class="emoji">🧾</span> فاتورة</label>
                             <input id="invoiceFile" type="file" accept="image/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-50 file:text-blue-700">
                         </div>
-                        <button id="addBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 rounded-xl transition shadow-lg text-lg">
+                        <button id="addBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 rounded-xl transition shadow-lg text-lg btn-animate">
                             <span class="emoji">✨</span> إضافة
                         </button>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Transactions List -->
             <div class="lg:col-span-2">
                 <div class="glass dark:bg-gray-800/80 rounded-2xl shadow-lg p-6 card-hover animate-slide-up">
