@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مصاريفي V6</title>
+    <title>مصاريفي V6 - AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -12,23 +12,25 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
         body { font-family: 'Cairo', sans-serif; }
-       .modal { display: none; }
-       .modal.active { display: flex; }
+.modal { display: none; }
+.modal.active { display: flex; }
+.ai-typing::after { content: '...'; animation: dots 1.5s infinite; }
+        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div id="app" class="hidden">
         <header class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg">
             <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                <h1 id="logo" class="text-2xl font-bold cursor-pointer select-none">مصاريفي V6 💎</h1>
+                <h1 id="logo" class="text-2xl font-bold cursor-pointer select-none">مصاريفي V6 🤖</h1>
                 <div class="flex items-center gap-4">
                     <span id="planBadge" class="bg-white/20 px-3 py-1 rounded-full text-sm"></span>
+                    <button id="aiBtn" onclick="toggleAI()" class="hidden bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">💬 AI VIP</button>
                     <img id="userPhoto" class="w-10 h-10 rounded-full border-2 border-white">
                     <button onclick="logout()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">خروج</button>
                 </div>
             </div>
         </header>
-
         <main class="max-w-7xl mx-auto p-4">
             <div class="grid md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-white rounded-xl shadow p-6">
@@ -43,8 +45,6 @@
                     <div class="text-gray-500 text-sm mb-1">هذا الشهر</div>
                     <div id="monthTotal" class="text-3xl font-bold text-indigo-600">$0.00</div>
                 </div>
-            </div>
-
             <div class="bg-white rounded-xl shadow p-6 mb-6">
                 <h2 class="text-xl font-bold mb-4">إضافة مصروف جديد</h2>
                 <div class="grid md:grid-cols-4 gap-4">
@@ -53,8 +53,8 @@
                     <input id="description" type="text" placeholder="الوصف" class="border rounded-lg px-4 py-2">
                     <button onclick="addTransaction()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg transition">إضافة</button>
                 </div>
+                <button id="aiAnalyzeBtn" onclick="aiAnalyze()" class="hidden mt-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-bold">🤖 حلل مصاريفي بالذكاء الاصطناعي VIP</button>
             </div>
-
             <div class="grid md:grid-cols-2 gap-6 mb-6">
                 <div class="bg-white rounded-xl shadow p-6">
                     <div class="flex justify-between items-center mb-4">
@@ -70,8 +70,19 @@
             </div>
         </main>
     </div>
-
-    <!-- Admin Modal -->
+    <div id="aiModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-2xl max-h- flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">المساعد المالي الذكي VIP 🤖💎</h2>
+                <button onclick="toggleAI()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div id="aiChat" class="flex-1 overflow-y-auto mb-4 space-y-3 bg-gray-50 p-4 rounded-lg"></div>
+            <div class="flex gap-2">
+                <input id="aiInput" type="text" placeholder="اسأل عن مصاريفك..." class="flex-1 border rounded-lg px-4 py-2" onkeypress="if(event.key==='Enter')sendAIMessage()">
+                <button onclick="sendAIMessage()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold">إرسال</button>
+            </div>
+        </div>
+    </div>
     <div id="adminModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-8 w-full max-w-md">
             <h2 class="text-2xl font-bold mb-4">وضع الأدمن 🔐</h2>
@@ -83,174 +94,7 @@
             <div id="adminError" class="text-red-500 text-sm mt-3 hidden"></div>
         </div>
     </div>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBS3FCovS0LmOGgWSIOxoL3kiKe5mjkl1k",
-            authDomain: "masarefy-v6.firebaseapp.com",
-            projectId: "masarefy-v6",
-            storageBucket: "masarefy-v6.appspot.com",
-            messagingSenderId: "362855388821",
-            appId: "1:362855388821:web:6bc34c415c520f60102d9c"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        
-        let currentUser = null;
-        let userPlan = 'free';
-        let transactions = [];
-        let chart = null;
-        let logoClicks = 0;
-        let isAdmin = false;
-
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                window.location.href = 'login.html';
-                return;
-            }
-            currentUser = user;
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (!userDoc.exists ||!userDoc.data().plan) {
-                window.location.href = 'pricing.html';
-                return;
-            }
-            userPlan = userDoc.data().plan;
-            document.getElementById('userPhoto').src = user.photoURL;
-            document.getElementById('planBadge').textContent = userPlan.toUpperCase();
-            document.getElementById('app').classList.remove('hidden');
-            if (userPlan!== 'free') document.getElementById('exportBtn').classList.remove('hidden');
-            loadTransactions();
-            setupAdminClicks();
-        });
-
-        function loadTransactions() {
-            db.collection('transactions')
-               .where('userId', '==', currentUser.uid)
-               .orderBy('createdAt', 'desc')
-               .onSnapshot(snapshot => {
-                    transactions = [];
-                    snapshot.forEach(doc => {
-                        transactions.push({ id: doc.id,...doc.data() });
-                    });
-                    updateUI();
-                });
-        }
-
-        async function addTransaction() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            const category = document.getElementById('category').value;
-            const description = document.getElementById('description').value;
-            
-            if (!amount ||!category) return alert('املأ المبلغ والتصنيف');
-            if (userPlan === 'free' && transactions.length >= 50) return alert('وصلت للحد الأقصى في الخطة المجانية');
-            
-            await db.collection('transactions').add({
-                userId: currentUser.uid,
-                amount,
-                category,
-                description,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            document.getElementById('amount').value = '';
-            document.getElementById('category').value = '';
-            document.getElementById('description').value = '';
-        }
-
-        async function deleteTransaction(id) {
-            if (confirm('حذف المعاملة؟')) {
-                await db.collection('transactions').doc(id).delete();
-            }
-        }
-
-        function updateUI() {
-            const total = transactions.reduce((sum, t) => sum + t.amount, 0);
-            const monthTotal = transactions.filter(t => {
-                const d = t.createdAt?.toDate();
-                const now = new Date();
-                return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            }).reduce((sum, t) => sum + t.amount, 0);
-            
-            document.getElementById('totalExpense').textContent = `$${total.toFixed(2)}`;
-            document.getElementById('totalCount').textContent = transactions.length;
-            document.getElementById('monthTotal').textContent = `$${monthTotal.toFixed(2)}`;
-            
-            const categories = {};
-            transactions.forEach(t => {
-                categories[t.category] = (categories[t.category] || 0) + t.amount;
-            });
-            
-            if (chart) chart.destroy();
-            chart = new Chart(document.getElementById('chart'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(categories),
-                    datasets: [{ data: Object.values(categories), backgroundColor: ['#8b5cf6', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
-            
-            document.getElementById('transactions').innerHTML = transactions.slice(0, 10).map(t => `
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div>
-                        <div class="font-bold">${t.category}</div>
-                        <div class="text-sm text-gray-500">${t.description || 'بدون وصف'}</div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="text-lg font-bold text-red-500">$${t.amount.toFixed(2)}</div>
-                        <button onclick="deleteTransaction('${t.id}')" class="text-red-500 hover:text-red-700">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function exportData() {
-            if (userPlan === 'free') return alert('التصدير متاح في Pro و Max فقط');
-            let csv = 'المبلغ,التصنيف,الوصف,التاريخ\n';
-            transactions.forEach(t => {
-                const date = t.createdAt?.toDate().toLocaleDateString('ar-EG') || '';
-                csv += `${t.amount},${t.category},${t.description || ''},${date}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'masarefy-export.csv';
-            link.click();
-        }
-
-        function setupAdminClicks() {
-            document.getElementById('logo').addEventListener('click', () => {
-                logoClicks++;
-                if (logoClicks >= 5) {
-                    logoClicks = 0;
-                    document.getElementById('adminModal').classList.add('active');
-                }
-                setTimeout(() => { logoClicks = 0; }, 2000);
-            });
-        }
-
-        function checkAdmin() {
-            const pass = document.getElementById('adminPass').value;
-            if (pass === 'abdullah2026') {
-                isAdmin = true;
-                alert('تم تفعيل وضع الأدمن 🔓\nيمكنك الآن حذف أي معاملة');
-                closeAdmin();
-            } else {
-                document.getElementById('adminError').textContent = 'كلمة سر خاطئة';
-                document.getElementById('adminError').classList.remove('hidden');
-            }
-        }
-
-        function closeAdmin() {
-            document.getElementById('adminModal').classList.remove('active');
-            document.getElementById('adminPass').value = '';
-            document.getElementById('adminError').classList.add('hidden');
-        }
-
-        function logout() {
-            auth.signOut();
-        }
-    </script>
+    <script src="app.js"></script>
+    <script>initApp();</script>
 </body>
 </html>
