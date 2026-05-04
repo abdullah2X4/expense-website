@@ -659,4 +659,42 @@ function aiAnalyze() {
         document.getElementById('aiInput').value = t('fullAnalysisPlan');
         sendAIMessage();
     }, 500);
+// Search + Month Filter
+if(document.getElementById("searchInput")){
+  document.getElementById("searchInput").addEventListener("input", filterExp);
+  document.getElementById("monthFilter").addEventListener("change", filterExp);
+}
+function filterExp(){
+  let s = document.getElementById("searchInput").value.toLowerCase();
+  let m = document.getElementById("monthFilter").value;
+  let f = expenses.filter(e => (!s || e.name.toLowerCase().includes(s)) && (!m || e.date.startsWith(m)));
+  renderExpenses(f);
+}
+function renderExpenses(list = expenses){
+  let c = document.getElementById("expensesList");
+  c.innerHTML = list.length ? "" : "<p class="text-center text-gray-500 py-8">لا توجد مصاريف</p>";
+  list.forEach(e => {
+    c.innerHTML += `<div class="expense-item">${e.name} - ${e.amount} ج.م</div>`;
+  });
+}
+
+// Search + Month Filter
+if(document.getElementById("searchInput")){
+  document.getElementById("searchInput").addEventListener("input", filterExp);
+  document.getElementById("monthFilter").addEventListener("change", filterExp);
+}
+function filterExp(){
+  let s = document.getElementById("searchInput").value.toLowerCase();
+  let m = document.getElementById("monthFilter").value;
+  let f = expenses.filter(e => (!s || e.name.toLowerCase().includes(s)) && (!m || e.date.startsWith(m)));
+  renderExpenses(f);
+}
+function renderExpenses(list = expenses){
+  let c = document.getElementById("expensesList");
+  c.innerHTML = list.length ? "" : "<p class="text-center text-gray-500 py-8">لا توجد مصاريف</p>";
+  list.forEach(e => {
+    c.innerHTML += `<div class="expense-item">${e.name} - ${e.amount} ج.م</div>`;
+  });
+}
+
 }       
