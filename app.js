@@ -1,4 +1,4 @@
-// ===== Masarefy V7.0 Pro - Full Working Version =====
+// ===== Masarefy V7.1 Pro - Full Working Version =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, getDoc, setDoc, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
@@ -30,7 +30,7 @@ let monthlyChart = null;
 let editingId = null;
 let selectedMonth = new Date().toISOString().slice(0, 7);
 let monthlyBudget = 0;
-const ADMIN_PASSWORD = 'Masarefy@V6_Admin#2026';
+const ADMIN_PASSWORD = 'Masarefy@V7_Admin#2026';
 let adminClicks = 0;
 let aiUsageToday = 0;
 
@@ -104,7 +104,6 @@ function applyTranslations() {
   document.getElementById('htmlRoot').dir = currentLang === 'ar'? 'rtl' : 'ltr';
 }
 
-// ===== Helpers =====
 function formatCurrency(amount) {
   const converted = amount * currencyRates[currentCurrency];
   return converted.toFixed(2) + ' ' + currencySymbols[currentCurrency];
@@ -124,7 +123,6 @@ function setTheme(theme) {
   localStorage.setItem('theme', theme);
 }
 
-// ===== Login Page =====
 if (window.location.pathname.includes('login')) {
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginBtn')?.addEventListener('click', async () => {
@@ -151,18 +149,15 @@ if (window.location.pathname.includes('login')) {
   });
 }
 
-// ===== Main Dashboard =====
 if (window.location.pathname.includes('index') || window.location.pathname === '/' || window.location.pathname.endsWith('/expense-website/') || window.location.pathname.endsWith('/expense-website/index.html')) {
 
   document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Loaded - Setting up event listeners');
     applyTranslations();
 
-    // Initialize
     document.getElementById('monthFilter').value = selectedMonth;
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
 
-    // All Event Listeners
     document.getElementById('langSelect').value = currentLang;
     document.getElementById('currencySelect').value = currentCurrency;
 
@@ -213,7 +208,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     currentUser = user;
     document.getElementById('userEmail').textContent = user.email;
 
-    // Get user data
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     if (userDoc.exists()) {
       const data = userDoc.data();
@@ -223,14 +217,12 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       aiUsageToday = data.aiUsageToday || 0;
       document.getElementById('monthlyBudgetInput').value = monthlyBudget;
 
-      // Check if plan expired
       if (userPlanExpiry && new Date() > userPlanExpiry) {
         await updateDoc(doc(db, 'users', user.uid), { plan: 'free', planExpiry: null });
         userPlan = 'free';
         alert('⚠️ انتهى اشتراكك! تم تحويلك للخطة المجانية');
       }
 
-      // Reset AI usage if new day
       const today = new Date().toISOString().split('T')[0];
       if (data.aiUsageDate!== today) {
         await updateDoc(doc(db, 'users', user.uid), { aiUsageToday: 0, aiUsageDate: today });
@@ -294,7 +286,8 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
   function updateAiLimitDisplay() {
     const limit = userPlan === 'free'? 3 : userPlan === 'pro'? 5 : '∞';
     const remaining = userPlan === 'max'? '∞' : limit - aiUsageToday;
-    document.getElementById('aiLimitText').textContent = remaining;
+    const el = document.getElementById('aiLimitText');
+    if (el) el.textContent = remaining;
   }
 
   function initDashboard(user) {
@@ -303,7 +296,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     addBtn?.addEventListener("click", async () => {
       console.log('Add button clicked');
 
-      // Check limit for free plan
       if (userPlan === 'free' && transactions.length >= 50) {
         alert('وصلت للحد الأقصى 50 معاملة. رقي حسابك لـ Pro! 💎');
         window.location.href = 'pricing.html';
@@ -351,7 +343,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
           await addDoc(collection(db, "transactions"), data);
         }
 
-        // Clear form
         document.getElementById("amount").value = "";
         document.getElementById("note").value = "";
         document.getElementById("invoiceFile").value = "";
@@ -372,7 +363,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       }
     });
 
-    // Load transactions with real-time sync
     const q = query(
       collection(db, "transactions"),
       where("userId", "==", user.uid),
@@ -419,14 +409,13 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     document.getElementById("balance").textContent = formatCurrency(balance);
     document.getElementById("monthTotal").textContent = formatCurrency(monthExpenses);
 
-    // Filter by month for list
     const monthTransactions = transactions.filter(t => {
       const date = t.createdAt.toDate();
       return date.toISOString().slice(0, 7) === selectedMonth;
     });
 
     document.getElementById("transactionsList").innerHTML = monthTransactions.length === 0
-? '<div class="text-center text-gray-500 py-8"><span class="emoji text-6xl">📭</span><p class="mt-4">لا توجد معاملات في هذا الشهر</p></div>'
+    ? '<div class="text-center text-gray-500 py-8"><span class="emoji text-6xl">📭</span><p class="mt-4">لا توجد معاملات في هذا الشهر</p></div>'
       : monthTransactions.map(t => `
         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl animate-slide-up">
           <div class="flex items-center gap-3">
@@ -467,7 +456,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       <small>المعاملات: ${limits[userPlan].trans} | AI: ${limits[userPlan].ai}</small>
     `;
 
-    // Update plan buttons
     const freeBtn = document.getElementById('freePlanBtn');
     const proBtn = document.getElementById('proPlanBtn');
     const maxBtn = document.getElementById('maxPlanBtn');
@@ -536,7 +524,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
           label: 'المصروفات',
           data: Object.values(data).slice(-6),
           borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 0.1)',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
           tension: 0.4,
           fill: true
         }]
@@ -553,8 +541,8 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     }
 
     const monthExpenses = transactions
- .filter(t => t.type === 'expense' && t.createdAt.toDate().toISOString().slice(0, 7) === selectedMonth)
- .reduce((sum, t) => sum + t.amount, 0);
+    .filter(t => t.type === 'expense' && t.createdAt.toDate().toISOString().slice(0, 7) === selectedMonth)
+    .reduce((sum, t) => sum + t.amount, 0);
 
     const percent = (monthExpenses / monthlyBudget * 100).toFixed(0);
 
@@ -567,7 +555,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     }
   }
 
-  // Budget Functions
   window.saveBudget = async () => {
     const budget = parseFloat(document.getElementById('monthlyBudgetInput').value);
     if (!budget || budget < 0) return alert('اكتب ميزانية صحيحة');
@@ -579,7 +566,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     alert('تم حفظ الميزانية ✅');
   };
 
-  // AI Functions
   window.openAI = async () => {
     await updateAiLimit();
     if (userPlan === 'free' && aiUsageToday >= 3) {
@@ -618,7 +604,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     const input = document.getElementById('aiInput').value.trim();
     if (!input) return;
 
-    // Check limit
     if (userPlan === 'free' && aiUsageToday >= 3) {
       alert('وصلت للحد الأقصى اليوم');
       return;
@@ -632,12 +617,10 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     chat.innerHTML += `<div class="text-right"><div class="inline-block bg-blue-500 text-white px-4 py-2 rounded-2xl">${input}</div></div>`;
     document.getElementById('aiInput').value = '';
 
-    // Update usage
     aiUsageToday++;
     await updateDoc(doc(db, 'users', currentUser.uid), { aiUsageToday });
     updateAiLimitDisplay();
 
-    // AI Response
     const totalExp = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const avgExp = totalExp / transactions.length || 0;
     const topCategory = Object.entries(transactions.reduce((acc, t) => {
@@ -667,31 +650,25 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     }, 1000);
   };
 
-  // Admin Functions
   function handleAdminClick() {
     adminClicks++;
     if (adminClicks >= 5) {
-      showModal('adminModal');
+      const pass = prompt('🔐 Admin Password:');
+      if (pass === ADMIN_PASSWORD) {
+        const transId = prompt('رقم عملية الدفع:');
+        const email = prompt('إيميل العميل:');
+        const plan = prompt('الخطة (pro/max):');
+        if (transId && email && plan) {
+          activateSubscription(email, plan, transId);
+        }
+      } else {
+        alert('كلمة سر غلط ❌');
+      }
       adminClicks = 0;
     }
   }
 
-  window.activatePlanBtn?.addEventListener('click', async () => {
-    const pass = document.getElementById('adminPassInput').value;
-    const transId = document.getElementById('transIdInput').value;
-    const email = document.getElementById('customerEmailInput').value;
-    const plan = document.getElementById('planTypeInput').value;
-
-    if (pass!== ADMIN_PASSWORD) {
-      alert('كلمة سر غلط ❌');
-      return;
-    }
-
-    if (!transId ||!email ||!plan) {
-      alert('املأ كل الحقول ❌');
-      return;
-    }
-
+  async function activateSubscription(email, plan, transId) {
     try {
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('email', '==', email));
@@ -714,12 +691,11 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
 
         const activationLink = `${window.location.origin}/index.html?activated=${transId}`;
         alert(`✅ تم تفعيل ${plan.toUpperCase()} للعميل ${email}\n\nحتى ${expiry.toLocaleDateString('ar-EG')}\n\nلينك التفعيل:\n${activationLink}\n\nابعت اللينك للعميل`);
-        hideModal('adminModal');
       } else {
         alert('❌ العميل غير موجود. خليه يسجل الأول');
       }
     } catch (error) {
       alert('خطأ: ' + error.message);
     }
-  });
+  }
 }
