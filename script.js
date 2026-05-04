@@ -114,7 +114,7 @@ freeBtn.addEventListener('click', () => {
     localStorage.setItem('freeMode', 'true');
     paywall.style.display = 'none';
     showApp();
-    alert('⚠️ النسخة المجانية: 50 مصروف بس');
+    alert('⚠️ النسخة المجانية: 50 مصروف بس\n💎 تقدر ترقي لـ VIP أي وقت من الزرار الذهبي فوق');
 });
 
 // ========== لوحة تفعيل الأدمن السرية ==========
@@ -130,8 +130,8 @@ document.querySelector('.vip-badge').addEventListener('click', () => {
                 const expiry = new Date();
                 expiry.setMonth(expiry.getMonth() + 1);
                 const activationCode = btoa(`VIP-${txId}-${expiry.toISOString()}`);
-                prompt('📋 ابعت الكود ده للعميل ينسخه كله:', activationCode);
-                alert('✅ ابعت للعميل الرابط ده:\n\n' + window.location.origin + window.location.pathname + '#activate=' + activationCode);
+                const activationLink = window.location.origin + window.location.pathname + '#activate=' + activationCode;
+                prompt('📋 ابعت الرابط ده للعميل:', activationLink);
             }
         } else {
             alert('❌ كود غلط');
@@ -139,7 +139,7 @@ document.querySelector('.vip-badge').addEventListener('click', () => {
     }
 });
 
-// العميل يحط الكود ده في موبايله
+// العميل يفتح الرابط يتفعل أوتوماتيك
 if (window.location.hash.startsWith('#activate=')) {
     try {
         const code = window.location.hash.replace('#activate=', '');
@@ -149,6 +149,7 @@ if (window.location.hash.startsWith('#activate=')) {
             localStorage.setItem('vipExpiry', expiry);
             localStorage.setItem('isVIP', 'true');
             localStorage.removeItem('pendingTx');
+            localStorage.removeItem('freeMode');
             alert('👑 تم تفعيل VIP بنجاح لمدة شهر!');
             window.location.hash = '';
             location.reload();
@@ -162,7 +163,7 @@ if (window.location.hash.startsWith('#activate=')) {
 themeDots.forEach(dot => {
     dot.addEventListener('click', () => {
         if (!localStorage.getItem('isVIP')) {
-            alert('🔒 الثيمات ميزة VIP بس بـ 50ج/شهر');
+            alert('🔒 الثيمات ميزة VIP بس بـ 50ج/شهر\n💎 رقي حسابك من الزرار الذهبي فوق');
             return;
         }
         const theme = dot.dataset.theme;
@@ -180,6 +181,30 @@ document.querySelector(`[data-theme="${savedTheme}"]`)?.classList.add('active');
 cloudBtn.addEventListener('click', () => {
     alert('☁️ ميزة Cloud Sync قريباً في V6.0!\n👑 هتقدر تزامن مصاريفك على كل أجهزتك');
 });
+
+// زرار الترقية للنسخة المجانية - يظهر أوتوماتيك
+if (!localStorage.getItem('isVIP') && localStorage.getItem('freeMode')) {
+    const upgradeBtn = document.createElement('button');
+    upgradeBtn.id = 'upgradeBtn';
+    upgradeBtn.className = 'icon-btn';
+    upgradeBtn.innerHTML = '💎';
+    upgradeBtn.title = 'ترقية لـ VIP';
+    upgradeBtn.style.background = 'linear-gradient(135deg,#F59E0B,#EF4444)';
+    upgradeBtn.style.animation = 'pulse 2s infinite';
+    cloudBtn.parentNode.insertBefore(upgradeBtn, cloudBtn);
+
+    upgradeBtn.addEventListener('click', () => {
+        if (confirm('👑 عايز ترقي لـ VIP بـ 50ج/شهر؟\n\n✨ هتاخد:\n- تقارير Excel + PDF\n- 4 ثيمات ملونة\n- صور الفواتير\n- مصاريف غير محدودة')) {
+            localStorage.removeItem('freeMode');
+            location.reload();
+        }
+    });
+
+    // إضافة انيميشن للزرار
+    const style = document.createElement('style');
+    style.textContent = '@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }';
+    document.head.appendChild(style);
+}
 
 function checkLock() {
     const pass = localStorage.getItem('appPassword');
@@ -414,7 +439,7 @@ function updateCharts(items) {
 
 addBtn.addEventListener('click', () => {
     if (!localStorage.getItem('isVIP') && expenses.length >= 50) {
-        alert('🔒 وصلت للحد الأقصى 50 مصروف في النسخة المجانية\nرقي لـ VIP بـ 50ج شهرياً');
+        alert('🔒 وصلت للحد الأقصى 50 مصروف في النسخة المجانية\n💎 رقي لـ VIP بـ 50ج شهرياً من الزرار الذهبي فوق');
         return;
     }
 
@@ -500,7 +525,7 @@ themeBtn.addEventListener('click', () => {
 
 exportExcelBtn.addEventListener('click', () => {
     if (!localStorage.getItem('isVIP')) {
-        alert('🔒 الميزة دي VIP بس بـ 50ج/شهر');
+        alert('🔒 الميزة دي VIP بس بـ 50ج/شهر\n💎 رقي حسابك من الزرار الذهبي فوق');
         return;
     }
     const data = expenses.map(e => ({
@@ -518,7 +543,7 @@ exportExcelBtn.addEventListener('click', () => {
 
 exportPdfBtn.addEventListener('click', () => {
     if (!localStorage.getItem('isVIP')) {
-        alert('🔒 الميزة دي VIP بس بـ 50ج/شهر');
+        alert('🔒 الميزة دي VIP بس بـ 50ج/شهر\n💎 رقي حسابك من الزرار الذهبي فوق');
         return;
     }
     const { jsPDF } = window.jspdf;
