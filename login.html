@@ -3,31 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول - مصاريفي V6</title>
+    <title>Masarefy V6 - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
-        body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        body { font-family: 'Cairo', sans-serif; }
+        
+        /* انيميشن دخول */
+        .fade-in { animation: fadeIn 0.6s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* انيميشن الخلفية */
+        .bg-animated {
+            background: linear-gradient(-45deg, #8b5cf6, #6366f1, #3b82f6, #06b6d4);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* انيميشن الزرار */
+        button:active { transform: scale(0.97); }
+        button { transition: all 0.2s; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        <div class="text-center mb-8">
-            <div class="text-6xl mb-4">💎</div>
-            <h1 class="text-3xl font-bold text-gray-800">مصاريفي V6</h1>
-            <p class="text-gray-500 mt-2">إدارة أموالك بالذكاء الاصطناعي</p>
-        </div>
-        <button onclick="signInWithGoogle()" class="w-full bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition">
-            <svg class="w-6 h-6" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-            المتابعة باستخدام جوجل
-        </button>
-        <div id="error" class="mt-4 text-red-500 text-center text-sm hidden"></div>
+<body class="bg-animated min-h-screen flex items-center justify-center p-4">
+    
+    <!-- زرار اللغة والعملة -->
+    <div class="fixed top-4 right-4 flex gap-2 fade-in">
+        <button id="langBtn" onclick="toggleLang()" class="bg-white/20 backdrop-blur-md hover:bg-white/30 px-4 py-2 rounded-lg text-white font-bold transition">EN</button>
+        <button id="currencyBtn" onclick="toggleCurrency()" class="bg-white/20 backdrop-blur-md hover:bg-white/30 px-4 py-2 rounded-lg text-white font-bold transition">ج.م</button>
     </div>
+
+    <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-8 md:p-12 w-full max-w-md fade-in">
+        <div class="text-center mb-8">
+            <h1 id="loginTitle" class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 mb-2">مصاريفي V6</h1>
+            <p id="loginSubtitle" class="text-gray-600">إدارة أموالك بالذكاء الاصطناعي</p>
+        </div>
+        
+        <button onclick="signInWithGoogle()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-xl flex items-center justify-center gap-3">
+            <svg class="w-6 h-6" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span id="googleBtnText">المتابعة باستخدام جوجل</span>
+        </button>
+        
+        <div class="mt-6 text-center text-sm text-gray-500">
+            <p id="paymentText">للدفع: اتصالات كاش أو فودافون كاش أو أورانج كاش</p>
+            <p id="paymentNumber" class="font-bold text-purple-600 text-lg mt-1">01121898023</p>
+        </div>
+        
+        <div id="error" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+    </div>
+
     <script src="app.js"></script>
     <script>initLogin();</script>
 </body>
 </html>
-
