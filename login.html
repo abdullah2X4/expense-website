@@ -3,22 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masarefy V6 - Login</title>
+    <title>Masarefy V6 - تسجيل الدخول</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
         body { font-family: 'Cairo', sans-serif; }
-        
-        /* انيميشن دخول */
-        .fade-in { animation: fadeIn 0.6s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* انيميشن الخلفية */
         .bg-animated {
-            background: linear-gradient(-45deg, #8b5cf6, #6366f1, #3b82f6, #06b6d4);
+            background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #06b6d4, #10b981);
             background-size: 400% 400%;
             animation: gradient 15s ease infinite;
         }
@@ -27,45 +22,67 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        
-        /* انيميشن الزرار */
-        button:active { transform: scale(0.97); }
-        button { transition: all 0.2s; }
     </style>
 </head>
 <body class="bg-animated min-h-screen flex items-center justify-center p-4">
     
-    <!-- زرار اللغة والعملة -->
-    <div class="fixed top-4 right-4 flex gap-2 fade-in">
-        <button id="langBtn" onclick="toggleLang()" class="bg-white/20 backdrop-blur-md hover:bg-white/30 px-4 py-2 rounded-lg text-white font-bold transition">EN</button>
-        <button id="currencyBtn" onclick="toggleCurrency()" class="bg-white/20 backdrop-blur-md hover:bg-white/30 px-4 py-2 rounded-lg text-white font-bold transition">ج.م</button>
-    </div>
-
-    <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-8 md:p-12 w-full max-w-md fade-in">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
+        <!-- Logo -->
         <div class="text-center mb-8">
-            <h1 id="loginTitle" class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 mb-2">مصاريفي V6</h1>
-            <p id="loginSubtitle" class="text-gray-600">إدارة أموالك بالذكاء الاصطناعي</p>
+            <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-wallet text-white text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Masarefy V6</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">تتبع مصاريفك بذكاء</p>
         </div>
-        
-        <button onclick="signInWithGoogle()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-xl flex items-center justify-center gap-3">
-            <svg class="w-6 h-6" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            <span id="googleBtnText">المتابعة باستخدام جوجل</span>
-        </button>
-        
-        <div class="mt-6 text-center text-sm text-gray-500">
-            <p id="paymentText">للدفع: اتصالات كاش أو فودافون كاش أو أورانج كاش</p>
-            <p id="paymentNumber" class="font-bold text-purple-600 text-lg mt-1">01121898023</p>
+
+        <!-- Login Form -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">البريد الإلكتروني</label>
+                <div class="relative">
+                    <input 
+                        id="email" 
+                        type="email" 
+                        placeholder="example@email.com"
+                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    >
+                    <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">كلمة المرور</label>
+                <div class="relative">
+                    <input 
+                        id="password" 
+                        type="password" 
+                        placeholder="••••••••"
+                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    >
+                    <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                </div>
+            </div>
+
+            <button 
+                id="loginBtn" 
+                type="button"
+                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+            >
+                <i class="fas fa-sign-in-alt"></i>
+                <span>تسجيل الدخول</span>
+            </button>
         </div>
+
+        <!-- Error Div -->
+        <div id="error" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm text-center"></div>
         
-        <div id="error" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+        <!-- Footer -->
+        <div class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p>إصدار 6.0 - Firebase v9</p>
+        </div>
     </div>
 
     <script type="module" src="app.js"></script>
-    <script>initLogin();</script>
 </body>
 </html>
