@@ -3,100 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مصاريفي V6 - AI</title>
+    <title>Masarefy V6 - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
         body { font-family: 'Cairo', sans-serif; }
-       .modal { display: none; }
-       .modal.active { display: flex; }
-       .ai-typing::after { content: '...'; animation: dots 1.5s infinite; }
+
+       /* انيميشن فتح المودال */
+      .modal { display: none; opacity: 0; transition: opacity 0.3s ease; }
+      .modal.active { display: flex; opacity: 1; }
+      .modal > div { transform: scale(0.9); transition: transform 0.3s ease; }
+      .modal.active > div { transform: scale(1); }
+
+       /* انيميشن الكتابة AI */
+      .ai-typing::after { content: '...'; animation: dots 1.5s infinite; }
         @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
+
+       /* انيميشن دخول العناصر */
+      .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+       /* انيميشن المعاملة الجديدة */
+      .transaction-new { animation: slideIn 0.4s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+
+       /* انيميشن الضغط على الزرار */
+        button:active { transform: scale(0.97); }
+        button { transition: all 0.2s; }
+
+       /* انيميشن الهيدر */
+       .header-glow { animation: glow 3s ease-in-out infinite; }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); } 50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.5); } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <div id="app" class="hidden">
-        <header class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg">
-            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                <h1 id="logo" class="text-2xl font-bold cursor-pointer select-none">مصاريفي V6 🤖</h1>
-                <div class="flex items-center gap-4">
-                    <span id="planBadge" class="bg-white/20 px-3 py-1 rounded-full text-sm"></span>
-                    <button id="aiBtn" onclick="toggleAI()" class="hidden bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">💬 AI VIP</button>
-                    <img id="userPhoto" class="w-10 h-10 rounded-full border-2 border-white">
-                    <button onclick="logout()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">خروج</button>
+
+    <!-- الهيدر -->
+    <header class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg header-glow">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <h1 id="logo" class="text-2xl md:text-3xl font-extrabold cursor-pointer select-none">مصاريفي V6 🤖</h1>
+                <span id="planBadge" class="bg-white/20 px-3 py-1 rounded-full text-xs md:text-sm"></span>
+                <button id="upgradeBtn" onclick="window.location.href='pricing.html'" class="hidden bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-3 py-1 rounded-lg text-sm font-bold transition">ترقية 🚀</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="langBtn" onclick="toggleLang()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">EN</button>
+                <button id="currencyBtn" onclick="toggleCurrency()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">ج.م</button>
+                <button id="aiBtn" onclick="toggleAI()" class="hidden bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">💬 AI VIP</button>
+                <img id="userPhoto" class="w-10 h-10 rounded-full border-2 border-white" src="" alt="User">
+                <button id="logoutBtn" onclick="logout()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">خروج</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- المحتوى الرئيسي -->
+    <main id="app" class="hidden max-w-7xl mx-auto p-4 fade-in">
+
+        <!-- كروت الإحصائيات -->
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow p-6 fade-in">
+                <h3 id="totalExpenseLabel" class="text-gray-500 text-sm mb-2">إجمالي المصاريف</h3>
+                <p id="totalExpense" class="text-3xl font-extrabold text-purple-600">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 fade-in">
+                <h3 id="totalCountLabel" class="text-gray-500 text-sm mb-2">عدد المعاملات</h3>
+                <p id="totalCount" class="text-3xl font-extrabold text-indigo-600">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 fade-in">
+                <h3 id="monthTotalLabel" class="text-gray-500 text-sm mb-2">هذا الشهر</h3>
+                <p id="monthTotal" class="text-3xl font-extrabold text-blue-600">0</p>
+            </div>
+        </div>
+
+        <!-- إضافة مصروف -->
+        <div class="bg-white rounded-xl shadow p-6 mb-8 fade-in">
+            <h2 id="addExpenseTitle" class="text-xl font-bold mb-4">إضافة مصروف جديد</h2>
+            <div class="grid md:grid-cols-4 gap-4">
+                <input id="amount" type="number" placeholder="المبلغ" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                <input id="category" type="text" placeholder="التصنيف" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                <input id="description" type="text" placeholder="الوصف" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                <button id="addBtn" onclick="addTransaction()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2 rounded-lg transition shadow-lg">إضافة</button>
+            </div>
+            <button id="aiAnalyzeBtn" onclick="aiAnalyze()" class="hidden mt-4 w-full bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-gray-800 font-bold py-3 rounded-lg transition shadow-lg">🤖 حلل مصاريفي بالذكاء الاصطناعي VIP</button>
+        </div>
+
+        <!-- الرسم البياني -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow p-6 fade-in">
+                <h2 id="chartTitle" class="text-xl font-bold mb-4">الرسم البياني</h2>
+                <canvas id="chart"></canvas>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="lastTransactionsTitle" class="text-xl font-bold">آخر المعاملات</h2>
+                    <button id="exportBtn" onclick="exportData()" class="hidden bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition">تصدير CSV</button>
+                </div>
+                <div id="transactions" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- مودال AI -->
+    <div id="aiModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
+                <h2 id="aiTitle" class="text-2xl font-bold">المساعد المالي الذكي VIP 🤖💎</h2>
+                <button onclick="toggleAI()" class="text-white hover:text-gray-200 text-2xl">✕</button>
+            </div>
+            <div id="aiChat" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+            <div class="p-4 border-t">
+                <div class="flex gap-2">
+                    <input id="aiInput" type="text" placeholder="اسأل عن مصاريفك..." class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                    <button id="sendBtn" onclick="sendAIMessage()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold transition">إرسال</button>
                 </div>
             </div>
-        </header>
-        <main class="max-w-7xl mx-auto p-4">
-            <div class="grid md:grid-cols-3 gap-6 mb-6">
-                <div class="bg-white rounded-xl shadow p-6">
-                    <div class="text-gray-500 text-sm mb-1">إجمالي المصاريف</div>
-                    <div id="totalExpense" class="text-3xl font-bold text-red-500">$0.00</div>
-                </div>
-                <div class="bg-white rounded-xl shadow p-6">
-                    <div class="text-gray-500 text-sm mb-1">عدد المعاملات</div>
-                    <div id="totalCount" class="text-3xl font-bold text-purple-600">0</div>
-                </div>
-                <div class="bg-white rounded-xl shadow p-6">
-                    <div class="text-gray-500 text-sm mb-1">هذا الشهر</div>
-                    <div id="monthTotal" class="text-3xl font-bold text-indigo-600">$0.00</div>
-                </div>
-            </div>
-            <div class="bg-white rounded-xl shadow p-6 mb-6">
-                <h2 class="text-xl font-bold mb-4">إضافة مصروف جديد</h2>
-                <div class="grid md:grid-cols-4 gap-4">
-                    <input id="amount" type="number" placeholder="المبلغ" class="border rounded-lg px-4 py-2">
-                    <input id="category" type="text" placeholder="التصنيف" class="border rounded-lg px-4 py-2">
-                    <input id="description" type="text" placeholder="الوصف" class="border rounded-lg px-4 py-2">
-                    <button onclick="addTransaction()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg transition">إضافة</button>
-                </div>
-                <button id="aiAnalyzeBtn" onclick="aiAnalyze()" class="hidden mt-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-bold">🤖 حلل مصاريفي بالذكاء الاصطناعي VIP</button>
-            </div>
-            <div class="grid md:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white rounded-xl shadow p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold">الرسم البياني</h2>
-                        <button id="exportBtn" onclick="exportData()" class="hidden bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm">تصدير CSV</button>
-                    </div>
-                    <canvas id="chart"></canvas>
-                </div>
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h2 class="text-xl font-bold mb-4">آخر المعاملات</h2>
-                    <div id="transactions" class="space-y-3 max-h-96 overflow-y-auto"></div>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
-    <div id="aiModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold">المساعد المالي الذكي VIP 🤖💎</h2>
-                <button onclick="toggleAI()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-            </div>
-            <div id="aiChat" class="flex-1 overflow-y-auto mb-4 space-y-3 bg-gray-50 p-4 rounded-lg"></div>
+
+    <!-- مودال الأدمن -->
+    <div id="adminModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+            <h2 id="adminTitle" class="text-2xl font-bold mb-4">وضع الأدمن 🔐</h2>
+            <input id="adminPass" type="password" placeholder="كلمة السر" class="w-full px-4 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-purple-500 focus:outline-none">
+            <div id="adminError" class="hidden text-red-500 text-sm mb-4"></div>
             <div class="flex gap-2">
-                <input id="aiInput" type="text" placeholder="اسأل عن مصاريفك..." class="flex-1 border rounded-lg px-4 py-2" onkeypress="if(event.key==='Enter')sendAIMessage()">
-                <button onclick="sendAIMessage()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold">إرسال</button>
+                <button id="adminEnterBtn" onclick="checkAdmin()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg transition">دخول</button>
+                <button id="adminCancelBtn" onclick="closeAdmin()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 rounded-lg transition">إلغاء</button>
             </div>
         </div>
     </div>
-    <div id="adminModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-8 w-full max-w-md">
-            <h2 class="text-2xl font-bold mb-4">وضع الأدمن 🔐</h2>
-            <input id="adminPass" type="password" placeholder="كلمة السر" class="w-full border rounded-lg px-4 py-2 mb-4">
-            <div class="flex gap-4">
-                <button onclick="checkAdmin()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg">دخول</button>
-                <button onclick="closeAdmin()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 rounded-lg">إلغاء</button>
-            </div>
-            <div id="adminError" class="text-red-500 text-sm mt-3 hidden"></div>
-        </div>
-    </div>
+
     <script src="app.js"></script>
     <script>initApp();</script>
 </body>
 </html>
-
