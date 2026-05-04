@@ -13,31 +13,29 @@
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
         body { font-family: 'Cairo', sans-serif; }
 
-       /* انيميشن فتح المودال */
-      .modal { display: none; opacity: 0; transition: opacity 0.3s ease; }
+       .modal { display: none; opacity: 0; transition: opacity 0.3s ease; }
       .modal.active { display: flex; opacity: 1; }
       .modal > div { transform: scale(0.9); transition: transform 0.3s ease; }
       .modal.active > div { transform: scale(1); }
 
-       /* انيميشن الكتابة AI */
       .ai-typing::after { content: '...'; animation: dots 1.5s infinite; }
         @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
 
-       /* انيميشن دخول العناصر */
       .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-       /* انيميشن المعاملة الجديدة */
       .transaction-new { animation: slideIn 0.4s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
 
-       /* انيميشن الضغط على الزرار */
         button:active { transform: scale(0.97); }
         button { transition: all 0.2s; }
 
-       /* انيميشن الهيدر */
        .header-glow { animation: glow 3s ease-in-out infinite; }
         @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); } 50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.5); } }
+        
+        /* شريط الميزانية */
+        .budget-bar { height: 8px; background: #e5e7eb; border-radius: 9999px; overflow: hidden; }
+        .budget-fill { height: 100%; background: linear-gradient(to right, #10b981, #f59e0b, #ef4444); transition: width 0.5s ease; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -51,8 +49,8 @@
                 <button id="upgradeBtn" onclick="window.location.href='pricing.html'" class="hidden bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-3 py-1 rounded-lg text-sm font-bold transition">ترقية 🚀</button>
             </div>
             <div class="flex items-center gap-2">
-                <button id="langBtn" onclick="toggleLang()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">EN</button>
-                <button id="currencyBtn" onclick="toggleCurrency()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">ج.م</button>
+                <button id="budgetBtn" onclick="toggleBudget()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">💰 الميزانية</button>
+                <button id="settingsBtn" onclick="toggleSettings()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">⚙️ إعدادات</button>
                 <button id="aiBtn" onclick="toggleAI()" class="hidden bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">💬 AI VIP</button>
                 <img id="userPhoto" class="w-10 h-10 rounded-full border-2 border-white" src="" alt="User">
                 <button id="logoutBtn" onclick="logout()" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-sm font-bold transition">خروج</button>
@@ -62,6 +60,17 @@
 
     <!-- المحتوى الرئيسي -->
     <main id="app" class="hidden max-w-7xl mx-auto p-4 fade-in">
+
+        <!-- شريط الميزانية -->
+        <div id="budgetBarContainer" class="hidden bg-white rounded-xl shadow p-4 mb-6 fade-in">
+            <div class="flex justify-between items-center mb-2">
+                <span id="budgetLabel" class="text-sm font-bold text-gray-700">الميزانية الشهرية</span>
+                <span id="budgetText" class="text-sm font-bold text-purple-600">0 / 0</span>
+            </div>
+            <div class="budget-bar">
+                <div id="budgetFill" class="budget-fill" style="width: 0%"></div>
+            </div>
+        </div>
 
         <!-- كروت الإحصائيات -->
         <div class="grid md:grid-cols-3 gap-6 mb-8">
@@ -108,9 +117,56 @@
 
     </main>
 
+    <!-- مودال الإعدادات -->
+    <div id="settingsModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="settingsTitle" class="text-2xl font-bold">الإعدادات ⚙️</h2>
+                <button onclick="toggleSettings()" class="text-gray-500 hover:text-gray-700 text-2xl">✕</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label id="languageLabel" class="block text-sm font-bold text-gray-700 mb-2">اللغة</label>
+                    <button onclick="toggleLang()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition">
+                        <span id="langBtn">English</span>
+                    </button>
+                </div>
+                
+                <div>
+                    <label id="currencyLabel" class="block text-sm font-bold text-gray-700 mb-2">العملة</label>
+                    <button onclick="toggleCurrency()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition">
+                        <span id="currencyBtn">$ دولار أمريكي</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال الميزانية -->
+    <div id="budgetModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="budgetTitle" class="text-2xl font-bold">الميزانية الشهرية 💰</h2>
+                <button onclick="toggleBudget()" class="text-gray-500 hover:text-gray-700 text-2xl">✕</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label id="budgetAmountLabel" class="block text-sm font-bold text-gray-700 mb-2">حدد ميزانيتك الشهرية</label>
+                    <input id="budgetInput" type="number" placeholder="5000" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                </div>
+                
+                <button onclick="saveBudget()" id="saveBudgetBtn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 rounded-lg transition shadow-lg">حفظ الميزانية</button>
+                
+                <button onclick="clearBudget()" id="clearBudgetBtn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 rounded-lg transition">إلغاء الميزانية</button>
+            </div>
+        </div>
+    </div>
+
     <!-- مودال AI -->
     <div id="aiModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h- flex flex-col">
             <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
                 <h2 id="aiTitle" class="text-2xl font-bold">المساعد المالي الذكي VIP 🤖💎</h2>
                 <button onclick="toggleAI()" class="text-white hover:text-gray-200 text-2xl">✕</button>
