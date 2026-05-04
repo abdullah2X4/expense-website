@@ -6,54 +6,105 @@
     <title>اختر خطتك - مصاريفي V6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>body{font-family:'Cairo',sans-serif}</style>
+    <style>
+        body{font-family:'Cairo',sans-serif}
+        .bounce-in{animation:bounceIn 0.8s}
+        @keyframes bounceIn{0%{transform:scale(0.3);opacity:0}50%{transform:scale(1.05)}70%{transform:scale(0.9)}100%{transform:scale(1);opacity:1}}
+        .card-hover{transition:all 0.3s}
+        .card-hover:hover{transform:translateY(-8px);box-shadow:0 15px 35px rgba(0,0,0,0.15)}
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-4">
     <div class="max-w-6xl mx-auto py-12">
-        <div class="text-center mb-12">
-            <h1 class="text-5xl font-black text-gray-900 mb-4">اختر الخطة المناسبة ليك</h1>
-            <p class="text-xl text-gray-600">ابدأ مجاناً وطور في أي وقت</p>
+        <div class="text-center mb-12 bounce-in">
+            <h1 class="text-5xl font-black text-gray-900 mb-4">اختر الخطة المناسبة ليك 💎</h1>
+            <p class="text-xl text-gray-600">ابدأ مجاناً وطور في أي وقت بدون قيود مزعجة</p>
         </div>
 
         <div class="grid md:grid-cols-3 gap-8">
-            <div class="bg-white rounded-2xl shadow-lg p-8 border-2 border-gray-200">
-                <h3 class="text-2xl font-bold mb-2">مجاني</h3>
+            <!-- Free -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 border-2 border-gray-200 card-hover">
+                <h3 class="text-2xl font-bold mb-2">مجاني 🆓</h3>
                 <div class="text-4xl font-black mb-6">0 <span class="text-lg text-gray-500">جنيه</span></div>
                 <ul class="space-y-3 mb-8 text-gray-600">
-                    <li>✓ 20 عملية شهرياً</li>
-                    <li>✓ تقارير أساسية</li>
-                    <li>✓ 3 فئات فقط</li>
-                    <li class="text-gray-400">✗ تصدير Excel</li>
-                    <li class="text-gray-400">✗ ذكاء اصطناعي</li>
+                    <li>✅ 20 عملية شهرياً</li>
+                    <li>✅ تقارير أساسية 📊</li>
+                    <li>✅ 3 فئات فقط 🏷️</li>
+                    <li>✅ مزامنة بين الأجهزة ☁️</li>
+                    <li class="text-gray-400">🔒 تصدير Excel/PDF</li>
+                    <li class="text-gray-400">🔒 تحليل ذكي AI</li>
                 </ul>
-                <button onclick="selectPlan('free')" class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded-xl font-bold transition">ابدأ مجاناً</button>
+                <button onclick="selectPlan('free')" class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded-xl font-bold transition">ابدأ مجاناً 🚀</button>
             </div>
 
-            <div class="bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl shadow-2xl p-8 text-white transform scale-105">
-                <div class="bg-yellow-400 text-gray-900 text-xs font-bold px-3 py-1 rounded-full inline-block mb-4">الأكثر شعبية</div>
-                <h3 class="text-2xl font-bold mb-2">عادي Pro</h3>
+            <!-- Pro -->
+            <div class="bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl shadow-2xl p-8 text-white transform scale-105 card-hover">
+                <div class="bg-yellow-400 text-gray-900 text-xs font-bold px-3 py-1 rounded-full inline-block mb-4">الأكثر شعبية 🔥</div>
+                <h3 class="text-2xl font-bold mb-2">عادي Pro ⭐</h3>
                 <div class="text-4xl font-black mb-6">25 <span class="text-lg text-violet-200">جنيه/شهر</span></div>
                 <ul class="space-y-3 mb-8">
-                    <li>✓ عمليات غير محدودة</li>
-                    <li>✓ تصدير Excel & PDF</li>
-                    <li>✓ فئات مخصصة</li>
-                    <li>✓ تقارير متقدمة</li>
-                    <li class="text-violet-200">✗ ذكاء اصطناعي</li>
+                    <li>✅ عمليات غير محدودة ♾️</li>
+                    <li>✅ تصدير Excel & PDF & JSON 📁</li>
+                    <li>✅ فئات مخصصة لا نهائية 🏷️</li>
+                    <li>✅ تقارير متقدمة + رسوم بيانية 📊</li>
+                    <li>✅ أولوية في الدعم 💬</li>
+                    <li class="text-violet-200">🔒 تحليل ذكي AI</li>
                 </ul>
-                <button onclick="selectPlan('pro')" class="w-full bg-white text-violet-600 hover:bg-gray-100 py-3 rounded-xl font-bold transition">اشترك الآن</button>
+                <button onclick="selectPlan('pro')" class="w-full bg-white text-violet-600 hover:bg-gray-100 py-3 rounded-xl font-bold transition">اشترك في Pro ✨</button>
             </div>
 
-            <div class="bg-gray-900 rounded-2xl shadow-lg p-8 text-white">
-                <h3 class="text-2xl font-bold mb-2">احترافي Max</h3>
+            <!-- Max -->
+            <div class="bg-gray-900 rounded-2xl shadow-lg p-8 text-white card-hover">
+                <h3 class="text-2xl font-bold mb-2">احترافي Max 👑</h3>
                 <div class="text-4xl font-black mb-6">50 <span class="text-lg text-gray-400">جنيه/شهر</span></div>
                 <ul class="space-y-3 mb-8 text-gray-300">
-                    <li>✓ كل مميزات Pro</li>
-                    <li>✓ ذكاء اصطناعي للتحليل</li>
-                    <li>✓ مشاركة مع العائلة</li>
-                    <li>✓ نسخ احتياطي تلقائي</li>
-                    <li>✓ دعم فني 24/7</li>
+                    <li>✅ كل مميزات Pro 💎</li>
+                    <li>✅ ذكاء اصطناعي للتحليل 🤖</li>
+                    <li>✅ نصائح توفير شخصية 💡</li>
+                    <li>✅ مشاركة مع العائلة 👨‍👩‍👧‍👦</li>
+                    <li>✅ نسخ احتياطي تلقائي ☁️</li>
+                    <li>✅ دعم فني 24/7 🔥</li>
                 </ul>
-                <button onclick="selectPlan('max')" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 hover:opacity-90 py-3 rounded-xl font-bold transition">احصل على Max</button>
+                <button onclick="selectPlan('max')" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 hover:opacity-90 py-3 rounded-xl font-bold transition">احصل على Max 🚀</button>
+            </div>
+        </div>
+
+        <!-- Payment Info Modal -->
+        <div id="paymentModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-8 max-w-md w-full bounce-in">
+                <div class="text-center mb-6">
+                    <div class="text-5xl mb-3">💸</div>
+                    <h3 class="text-2xl font-bold mb-2" id="planTitle">تأكيد الاشتراك</h3>
+                    <p class="text-gray-600">حول المبلغ على الرقم ده وبعدها هنفعلك الخطة</p>
+                </div>
+                
+                <div class="bg-violet-50 p-4 rounded-xl mb-4">
+                    <div class="text-sm text-gray-600 mb-1">رقم التحويل:</div>
+                    <div class="text-2xl font-black text-violet-600 flex items-center justify-between">
+                        01121898023
+                        <button onclick="copyNumber()" class="text-sm bg-violet-600 text-white px-3 py-1 rounded-lg">نسخ 📋</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-green-50 p-3 rounded-lg text-center">
+                        <div class="text-2xl mb-1">💚</div>
+                        <div class="text-xs font-bold">انستا باي</div>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-lg text-center">
+                        <div class="text-2xl mb-1">📱</div>
+                        <div class="text-xs font-bold">اتصالات كاش</div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 p-3 rounded-lg mb-4 text-sm">
+                    <b>مهم:</b> بعد التحويل ابعت سكرين على واتساب نفس الرقم مع إيميل حسابك عشان نفعلك فوراً ⚡
+                </div>
+
+                <div class="flex gap-2">
+                    <button id="confirmPay" class="flex-1 bg-violet-600 text-white py-3 rounded-xl font-bold">حولت خلاص ✅</button>
+                    <button id="closePay" class="flex-1 bg-gray-200 py-3 rounded-xl font-bold">إلغاء</button>
+                </div>
             </div>
         </div>
     </div>
@@ -76,6 +127,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        const modal = document.getElementById('paymentModal');
+        let selectedPlan = '';
+
         window.selectPlan = async (plan) => {
             const user = auth.currentUser;
             if (!user) return window.location.href = 'login.html';
@@ -84,10 +138,25 @@
                 await updateDoc(doc(db, 'users', user.uid), { plan: 'free' });
                 window.location.href = 'index.html';
             } else {
-                alert('الدفع هيتفعل قريب! دلوقتي هتدخل مجاني للتجربة');
-                await updateDoc(doc(db, 'users', user.uid), { plan: plan });
-                window.location.href = 'index.html';
+                selectedPlan = plan;
+                document.getElementById('planTitle').textContent = plan === 'pro'? 'اشتراك Pro ⭐ بـ 25 جنيه' : 'اشتراك Max 👑 بـ 50 جنيه';
+                modal.classList.remove('hidden');
             }
+        };
+
+        window.copyNumber = () => {
+            navigator.clipboard.writeText('01121898023');
+            alert('تم نسخ الرقم 📋');
+        };
+
+        document.getElementById('closePay').onclick = () => modal.classList.add('hidden');
+        
+        document.getElementById('confirmPay').onclick = async () => {
+            const user = auth.currentUser;
+            alert('تمام يا بطل! هنفعلك خلال دقائق بعد ما توصلنا التحويل 🚀\nهنبعتلك إشعار على الإيميل');
+            // مؤقتاً نفعل الخطة للتجربة - بعدين هنعملها يدوي من Firebase
+            await updateDoc(doc(db, 'users', user.uid), { plan: selectedPlan, pending_activation: true });
+            window.location.href = 'index.html';
         };
     </script>
 </body>

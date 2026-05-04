@@ -3,194 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#6366F1">
-    <title>مصاريفي VIP 👑</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <title>مصاريفي V6 - لوحة التحكم 💸</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body{font-family:'Cairo',sans-serif}
+      .locked{filter:blur(3px);pointer-events:none;user-select:none}
+      .pro-badge{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);animation:glow 2s infinite}
+      .max-badge{background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);animation:glow 2s infinite}
+      .fade-in{animation:fadeIn 0.6s ease-in}
+      .slide-up{animation:slideUp 0.5s ease-out}
+      .bounce-in{animation:bounceIn 0.8s}
+       @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+       @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+       @keyframes bounceIn{0%{transform:scale(0.3);opacity:0}50%{transform:scale(1.05)}70%{transform:scale(0.9)}100%{transform:scale(1);opacity:1}}
+       @keyframes glow{0%,100%{box-shadow:0 0 5px rgba(102,126,234,0.5)}50%{box-shadow:0 0 20px rgba(102,126,234,0.8)}}
+      .card-hover{transition:all 0.3s}
+      .card-hover:hover{transform:translateY(-5px);box-shadow:0 10px 25px rgba(0,0,0,0.1)}
+      .vip-click{cursor:pointer;user-select:none}
+    </style>
 </head>
-<body>
-    <div id="lockScreen" class="lock-screen">
-        <div class="lock-box">
-            <div class="lock-icon">👑</div>
-            <h2>مصاريفي VIP</h2>
-            <input type="password" id="passwordInput" placeholder="كلمة السر">
-            <button id="unlockBtn" class="btn-primary">فتح 🔓</button>
-            <p id="lockMsg"></p>
-        </div>
-    </div>
-
-    <div id="paywall" class="lock-screen" style="display:none">
-        <div class="lock-box">
-            <div class="lock-icon">💎</div>
-            <h2>مصاريفي VIP</h2>
-            <div id="payStep1">
-                <p style="margin: 20px 0; line-height: 1.8;">
-                    <b>اشترك بـ 50 جنيه / شهر</b><br>
-                    ✨ تقارير Excel + PDF<br>
-                    🎨 4 ثيمات ملونة<br>
-                    📸 صور الفواتير<br>
-                    ♾️ مصاريف غير محدودة
-                </p>
-                <div style="background:var(--card); padding:15px; border-radius:12px; margin:15px 0; border:2px dashed var(--primary);">
-                    <p style="font-size:14px; margin-bottom:8px;">حول على اتصالات كاش أو انستا باي:</p>
-                    <p style="font-size:24px; font-weight:900; color:var(--primary); direction:ltr;">01121898023</p>
-                    <p style="font-size:13px; color:var(--text-dim); margin-top:8px;">المبلغ: 50 جنيه</p>
-                    <p style="font-size:12px; color:var(--primary); margin-top:5px; font-weight:600;">💡 رقم العملية بيظهر في رسالة التحويل</p>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm sticky top-0 z-50 slide-up">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="text-3xl bounce-in">💎</div>
+                <div>
+                    <h1 class="text-xl font-black text-gray-900 vip-click" id="logoVip">مصاريفي V6</h1>
+                    <div id="userPlan" class="text-xs px-2 py-0.5 rounded-full font-bold inline-block"></div>
                 </div>
-                <button id="paidBtn" class="btn-primary">أنا حولت الفلوس ✓</button>
-                <button id="freeBtn" class="btn-secondary" style="margin-top:10px">كمل مجاني</button>
             </div>
-
-            <div id="payStep2" style="display:none">
-                <p style="margin:20px 0;">اكتب رقم العملية اللي جالك في رسالة انستا باي أو اتصالات كاش:</p>
-                <input type="text" id="txIdInput" placeholder="مثال: 1234567890" style="width:100%; padding:14px; border-radius:12px; border:2px solid var(--border); background:var(--card); color:var(--text); text-align:center; font-size:18px; font-weight:700;">
-                <button id="submitTxBtn" class="btn-primary" style="margin-top:15px;">تأكيد التحويل</button>
-                <button id="backBtn" class="btn-secondary" style="margin-top:10px">رجوع</button>
-                <p style="font-size:12px; margin-top:15px; color:var(--text-dim)">هيتم التفعيل خلال 24 ساعة بعد المراجعة<br>أو ابعت سكرين على واتساب: 01121898023</p>
+            <div class="flex items-center gap-4">
+                <div id="totalCount" class="text-xs text-gray-500"></div>
+                <a href="pricing.html" id="upgradeBtn" class="hidden bg-violet-600 text-white px-4 py-2 rounded-lg font-semibold text-sm card-hover">ترقية ✨</a>
+                <div id="userName" class="text-sm font-semibold text-gray-700"></div>
+                <button id="logoutBtn" class="text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg font-semibold card-hover">خروج 👋</button>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="container" id="app" style="display:none">
-        <header class="glass">
-            <div class="header-top">
-                <div class="logo">
-                    <h1>💎 مصاريفي <span class="vip-badge">VIP</span></h1>
-                </div>
-                <div class="header-actions">
-                    <div class="theme-picker">
-                        <button class="theme-dot" data-theme="purple" style="background:#6366F1"></button>
-                        <button class="theme-dot" data-theme="blue" style="background:#3B82F6"></button>
-                        <button class="theme-dot" data-theme="green" style="background:#10B981"></button>
-                        <button class="theme-dot" data-theme="gold" style="background:#F59E0B"></button>
-                    </div>
-                    <button id="cloudBtn" class="icon-btn">☁️</button>
-                    <button id="lockBtn" class="icon-btn">🔒</button>
-                    <button id="themeBtn" class="icon-btn">🌙</button>
-                </div>
-            <div class="budget-box">
-                <div class="budget-info">
-                    <span>💰 ميزانية الشهر</span>
-                    <input type="number" id="budgetInput" placeholder="5000">
-                </div>
-                <div class="progress-bar">
-                    <div id="progressFill"></div>
-                </div>
-                <div class="budget-footer">
-                    <span id="budgetText">0 / 0 جنيه</span>
-                    <span id="budgetAlert"></span>
-                </div>
+    <div class="max-w-7xl mx-auto p-4 md:p-8">
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm card-hover fade-in">
+                <div class="text-gray-500 text-sm mb-2">الرصيد الحالي 💰</div>
+                <div id="balance" class="text-3xl font-black text-gray-900">0 جنيه</div>
             </div>
-        </header>
-
-        <main>
-            <form id="expense-form" class="glass">
-                <h3>➕ إضافة مصروف جديد</h3>
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label for="name">📝 اسم المصروف</label>
-                        <input type="text" id="name" placeholder="مثال: بنزين" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="price">💵 السعر</label>
-                        <input type="number" id="price" placeholder="50" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="category">🏷️ التصنيف</label>
-                        <select id="category" required>
-                            <option value="🍔 أكل">🍔 أكل</option>
-                            <option value="🚗 مواصلات">🚗 مواصلات</option>
-                            <option value="📱 فواتير">📱 فواتير</option>
-                            <option value="🎮 ترفيه">🎮 ترفيه</option>
-                            <option value="💊 صحة">💊 صحة</option>
-                            <option value="🛍️ تسوق">🛍️ تسوق</option>
-                            <option value="📦 أخرى">📦 أخرى</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="payment">💳 طريقة الدفع</label>
-                        <select id="payment" required>
-                            <option value="💵 كاش">💵 كاش</option>
-                            <option value="💳 فيزا">💳 فيزا</option>
-                            <option value="📱 محفظة">📱 محفظة إلكترونية</option>
-                            <option value="🔄 تقسيط">🔄 تقسيط</option>
-                            <option value="🏦 تحويل بنكي">🏦 تحويل بنكي</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="receipt">📸 صورة الفاتورة VIP</label>
-                        <input type="file" id="receipt" accept="image/*">
-                    </div>
-                </div>
-                <button type="button" id="addBtn" class="btn-primary">✨ إضافة المصروف</button>
-            </form>
-
-            <div class="stats-grid">
-                <div class="stat-card glass">
-                    <div class="stat-icon">📊</div>
-                    <div class="stat-info">
-                        <span class="stat-label">مصروف الشهر</span>
-                        <span id="total" class="stat-value">0 جنيه</span>
-                    </div>
-                </div>
-                <div class="stat-card glass">
-                    <div class="stat-icon">📋</div>
-                    <div class="stat-info">
-                        <span class="stat-label">عدد المصاريف</span>
-                        <span id="count" class="stat-value">0</span>
-                    </div>
-                </div>
-                <div class="stat-card glass">
-                    <div class="stat-icon">💸</div>
-                    <div class="stat-info">
-                        <span class="stat-label">متوسط يومي</span>
-                        <span id="avgDaily" class="stat-value">0 جنيه</span>
-                    </div>
-                </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm card-hover fade-in" style="animation-delay:0.1s">
+                <div class="text-gray-500 text-sm mb-2">إجمالي الدخل 📈</div>
+                <div id="income" class="text-3xl font-black text-green-600">0 جنيه</div>
             </div>
-
-            <div class="filters glass">
-                <input type="month" id="monthFilter">
-                <input type="text" id="searchInput" placeholder="🔍 ابحث بالاسم...">
+            <div class="bg-white p-6 rounded-2xl shadow-sm card-hover fade-in" style="animation-delay:0.2s">
+                <div class="text-gray-500 text-sm mb-2">إجمالي المصاريف 📉</div>
+                <div id="expense" class="text-3xl font-black text-red-600">0 جنيه</div>
             </div>
-
-            <div class="actions">
-                <button id="exportExcelBtn" class="btn-secondary">📊 Excel VIP</button>
-                <button id="exportPdfBtn" class="btn-secondary">📄 PDF VIP</button>
-                <button id="exportJsonBtn" class="btn-secondary">📤 JSON</button>
-                <button id="clearBtn" class="btn-danger">🗑️ مسح الكل</button>
-            </div>
-
-            <div class="charts-grid">
-                <div class="chart-card glass">
-                    <h3>🎯 توزيع حسب التصنيف</h3>
-                    <canvas id="doughnutChart"></canvas>
-                </div>
-                <div class="chart-card glass">
-                    <h3>💳 توزيع حسب الدفع</h3>
-                    <canvas id="paymentChart"></canvas>
-                </div>
-                <div class="chart-card glass" style="grid-column: 1 / -1;">
-                    <h3>📈 صرف آخر 6 شهور</h3>
-                    <canvas id="lineChart"></canvas>
-                </div>
-            </div>
-
-            <div class="expenses-container glass">
-                <h3>📑 قائمة المصاريف</h3>
-                <ul id="list"></ul>
-            </div>
-        </main>
-
-        <footer>
-            <p>© 2026 مصاريفي VIP 👑 | Fintech Grade</p>
-        </footer>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html>
+            <div class="bg-white p-6 rounded-2xl shadow-sm card-hover fade-in" style="animation-delay:0.3s">
+                <div class="text-gray-
