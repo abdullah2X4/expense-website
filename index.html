@@ -12,9 +12,9 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
         body { font-family: 'Cairo', sans-serif; }
-.modal { display: none; }
-.modal.active { display: flex; }
-.ai-typing::after { content: '...'; animation: dots 1.5s infinite; }
+       .modal { display: none; }
+       .modal.active { display: flex; }
+       .ai-typing::after { content: '...'; animation: dots 1.5s infinite; }
         @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
     </style>
 </head>
@@ -45,6 +45,7 @@
                     <div class="text-gray-500 text-sm mb-1">هذا الشهر</div>
                     <div id="monthTotal" class="text-3xl font-bold text-indigo-600">$0.00</div>
                 </div>
+            </div>
             <div class="bg-white rounded-xl shadow p-6 mb-6">
                 <h2 class="text-xl font-bold mb-4">إضافة مصروف جديد</h2>
                 <div class="grid md:grid-cols-4 gap-4">
@@ -71,7 +72,7 @@
         </main>
     </div>
     <div id="aiModal" class="modal fixed inset-0 bg-black/50 items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-2xl max-h- flex flex-col">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">المساعد المالي الذكي VIP 🤖💎</h2>
                 <button onclick="toggleAI()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
@@ -98,3 +99,4 @@
     <script>initApp();</script>
 </body>
 </html>
+
