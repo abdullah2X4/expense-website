@@ -1,4 +1,4 @@
-// ===== Masarefy V6.2 Pro - Full Fixed Version =====
+// ===== Masarefy V7.0 Pro - Full Working Version =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, getDoc, setDoc, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
@@ -21,6 +21,7 @@ const storage = getStorage(app);
 // ===== Global State =====
 let currentUser = null;
 let userPlan = 'free';
+let userPlanExpiry = null;
 let currentLang = localStorage.getItem('lang') || 'ar';
 let currentCurrency = localStorage.getItem('currency') || 'EGP';
 let transactions = [];
@@ -31,19 +32,77 @@ let selectedMonth = new Date().toISOString().slice(0, 7);
 let monthlyBudget = 0;
 const ADMIN_PASSWORD = 'Masarefy@V6_Admin#2026';
 let adminClicks = 0;
+let aiUsageToday = 0;
 
 const currencyRates = { EGP: 1, USD: 0.020, EUR: 0.019, SAR: 0.076, AED: 0.074 };
 const currencySymbols = { EGP: 'ج.م', USD: '$', EUR: '€', SAR: 'ر.س', AED: 'د.إ' };
 
 const translations = {
-  ar: { upgrade: "ترقية", upgrade_to_pro: "ترقية لـ Pro", upgrade_to_max: "ترقية لـ Max" },
-  en: { upgrade: "Upgrade", upgrade_to_pro: "Upgrade to Pro", upgrade_to_max: "Upgrade to Max" },
-  fr: { upgrade: "Mettre à niveau", upgrade_to_pro: "Passer à Pro", upgrade_to_max: "Passer à Max" },
-  de: { upgrade: "Upgrade", upgrade_to_pro: "Auf Pro upgraden", upgrade_to_max: "Auf Max upgraden" },
-  es: { upgrade: "Actualizar", upgrade_to_pro: "Actualizar a Pro", upgrade_to_max: "Actualizar a Max" }
+  ar: {
+    app_name: "Masarefy", settings: "الإعدادات", language: "اللغة", currency: "العملة", theme: "المظهر", light: "فاتح", dark: "داكن",
+    monthly_budget: "الميزانية الشهرية", save: "حفظ", logout: "خروج", upgrade: "ترقية", upgrade_to_pro: "ترقية لـ Pro", upgrade_to_max: "ترقية لـ Max",
+    total_expenses: "إجمالي المصروفات", total_income: "إجمالي الدخل", balance: "الرصيد", month_total: "مصاريف الشهر",
+    add_transaction: "إضافة معاملة", expense: "مصروف", income: "دخل", add: "إضافة", recent: "آخر المعاملات",
+    distribution: "توزيع المصروفات", monthly: "المصروفات الشهرية", reset: "إعادة", invoice: "فاتورة",
+    ai_assistant: "المساعد الذكي", ai_welcome: "اسألني أي حاجة عن مصاريفك!", ai_limit: "المتبقي اليوم:",
+    plans: "خطط الاشتراك", free: "مجاني", popular: "الأكثر شعبية", current_plan: "خطتك الحالية", subscribe: "اشترك",
+    transactions_limit: "معاملة", ai_3: "3 أسئلة AI/يوم", ai_5: "5 أسئلة AI/يوم", ai_unlimited: "AI غير محدود",
+    no_export: "بدون تصدير", unlimited: "غير محدود", export: "تصدير Excel", invoices: "رفع فواتير",
+    all_pro: "كل Pro", predictive: "تحليل تنبؤي", priority: "دعم أولوية", currency_symbol: "ج.م"
+  },
+  en: {
+    app_name: "Masarefy", settings: "Settings", language: "Language", currency: "Currency", theme: "Theme", light: "Light", dark: "Dark",
+    monthly_budget: "Monthly Budget", save: "Save", logout: "Logout", upgrade: "Upgrade", upgrade_to_pro: "Upgrade to Pro", upgrade_to_max: "Upgrade to Max",
+    total_expenses: "Total Expenses", total_income: "Total Income", balance: "Balance", month_total: "Month Total",
+    add_transaction: "Add Transaction", expense: "Expense", income: "Income", add: "Add", recent: "Recent",
+    distribution: "Distribution", monthly: "Monthly", reset: "Reset", invoice: "Invoice",
+    ai_assistant: "AI Assistant", ai_welcome: "Ask me anything about your expenses!", ai_limit: "Left today:",
+    plans: "Subscription Plans", free: "Free", popular: "Most Popular", current_plan: "Current Plan", subscribe: "Subscribe",
+    transactions_limit: "transactions", ai_3: "3 AI questions/day", ai_5: "5 AI questions/day", ai_unlimited: "Unlimited AI",
+    no_export: "No export", unlimited: "Unlimited", export: "Export Excel", invoices: "Upload invoices",
+    all_pro: "All Pro", predictive: "Predictive analysis", priority: "Priority support", currency_symbol: "EGP"
+  },
+  fr: {
+    app_name: "Masarefy", settings: "Paramètres", language: "Langue", currency: "Devise", theme: "Thème", light: "Clair", dark: "Sombre",
+    monthly_budget: "Budget Mensuel", save: "Enregistrer", logout: "Déconnexion", upgrade: "Mettre à niveau", upgrade_to_pro: "Passer à Pro", upgrade_to_max: "Passer à Max",
+    total_expenses: "Dépenses Totales", total_income: "Revenus Totaux", balance: "Solde", month_total: "Total du Mois",
+    add_transaction: "Ajouter Transaction", expense: "Dépense", income: "Revenu", add: "Ajouter", recent: "Récent",
+    distribution: "Distribution", monthly: "Mensuel", reset: "Réinitialiser", invoice: "Facture",
+    ai_assistant: "Assistant IA", ai_welcome: "Demandez-moi n'importe quoi!", ai_limit: "Restant:",
+    currency_symbol: "€"
+  },
+  de: {
+    app_name: "Masarefy", settings: "Einstellungen", language: "Sprache", currency: "Währung", theme: "Thema", light: "Hell", dark: "Dunkel",
+    monthly_budget: "Monatliches Budget", save: "Speichern", logout: "Abmelden", upgrade: "Upgrade", upgrade_to_pro: "Auf Pro upgraden", upgrade_to_max: "Auf Max upgraden",
+    total_expenses: "Gesamtausgaben", total_income: "Gesamteinkommen", balance: "Saldo", month_total: "Monatssumme",
+    add_transaction: "Transaktion hinzufügen", expense: "Ausgabe", income: "Einkommen", add: "Hinzufügen", recent: "Neueste",
+    distribution: "Verteilung", monthly: "Monatlich", reset: "Zurücksetzen", invoice: "Rechnung",
+    ai_assistant: "KI-Assistent", ai_welcome: "Frag mich alles!", ai_limit: "Übrig:",
+    currency_symbol: "€"
+  },
+  es: {
+    app_name: "Masarefy", settings: "Configuración", language: "Idioma", currency: "Moneda", theme: "Tema", light: "Claro", dark: "Oscuro",
+    monthly_budget: "Presupuesto Mensual", save: "Guardar", logout: "Cerrar sesión", upgrade: "Actualizar", upgrade_to_pro: "Actualizar a Pro", upgrade_to_max: "Actualizar a Max",
+    total_expenses: "Gastos Totales", total_income: "Ingresos Totales", balance: "Saldo", month_total: "Total del Mes",
+    add_transaction: "Agregar Transacción", expense: "Gasto", income: "Ingreso", add: "Agregar", recent: "Reciente",
+    distribution: "Distribución", monthly: "Mensual", reset: "Restablecer", invoice: "Factura",
+    ai_assistant: "Asistente IA", ai_welcome: "¡Pregúntame lo que sea!", ai_limit: "Restante:",
+    currency_symbol: "€"
+  }
 };
 
-function t(key) { return translations[currentLang]?.[key] || key; }
+function t(key) {
+  return translations[currentLang]?.[key] || translations['ar'][key] || key;
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.getElementById('htmlRoot').lang = currentLang;
+  document.getElementById('htmlRoot').dir = currentLang === 'ar'? 'rtl' : 'ltr';
+}
 
 // ===== Helpers =====
 function formatCurrency(amount) {
@@ -97,6 +156,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
 
   document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Loaded - Setting up event listeners');
+    applyTranslations();
 
     // Initialize
     document.getElementById('monthFilter').value = selectedMonth;
@@ -109,7 +169,8 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     document.getElementById('langSelect').addEventListener('change', e => {
       currentLang = e.target.value;
       localStorage.setItem('lang', currentLang);
-      location.reload();
+      applyTranslations();
+      updateUI();
     });
 
     document.getElementById('currencySelect').addEventListener('change', e => {
@@ -142,7 +203,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     document.getElementById('darkThemeBtn').addEventListener('click', () => setTheme('dark'));
     document.getElementById('adminTriggerBtn').addEventListener('click', handleAdminClick);
 
-    // AI Enter key
     document.getElementById('aiInput').addEventListener('keypress', e => {
       if (e.key === 'Enter') askAI();
     });
@@ -156,20 +216,41 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     // Get user data
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     if (userDoc.exists()) {
-      userPlan = userDoc.data().plan || 'free';
-      monthlyBudget = userDoc.data().monthlyBudget || 0;
+      const data = userDoc.data();
+      userPlan = data.plan || 'free';
+      userPlanExpiry = data.planExpiry?.toDate();
+      monthlyBudget = data.monthlyBudget || 0;
+      aiUsageToday = data.aiUsageToday || 0;
       document.getElementById('monthlyBudgetInput').value = monthlyBudget;
+
+      // Check if plan expired
+      if (userPlanExpiry && new Date() > userPlanExpiry) {
+        await updateDoc(doc(db, 'users', user.uid), { plan: 'free', planExpiry: null });
+        userPlan = 'free';
+        alert('⚠️ انتهى اشتراكك! تم تحويلك للخطة المجانية');
+      }
+
+      // Reset AI usage if new day
+      const today = new Date().toISOString().split('T')[0];
+      if (data.aiUsageDate!== today) {
+        await updateDoc(doc(db, 'users', user.uid), { aiUsageToday: 0, aiUsageDate: today });
+        aiUsageToday = 0;
+      }
     } else {
       await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
         plan: 'free',
         monthlyBudget: 0,
+        aiUsageToday: 0,
+        aiUsageDate: new Date().toISOString().split('T')[0],
         createdAt: Timestamp.now()
       });
     }
 
     updatePlanBadge();
     updateUpgradeButton();
+    updatePlanExpiryWarning();
+    updateAiLimitDisplay();
     initDashboard(user);
   });
 
@@ -186,15 +267,34 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
 
     if (userPlan === "free") {
       upgradeBtn.classList.remove("hidden");
-      upgradeBtn.onclick = () => showModal('settingsModal');
+      upgradeBtn.onclick = () => window.location.href = 'pricing.html';
       upgradeBtn.innerHTML = `<span class="emoji">👑</span> <span class="hidden md:inline">${t('upgrade_to_pro')}</span>`;
     } else if (userPlan === "pro") {
       upgradeBtn.classList.remove("hidden");
       upgradeBtn.innerHTML = `<span class="emoji">⭐</span> <span class="hidden md:inline">${t('upgrade_to_max')}</span>`;
-      upgradeBtn.onclick = () => showModal('settingsModal');
+      upgradeBtn.onclick = () => window.location.href = 'pricing.html';
     } else {
       upgradeBtn.classList.add("hidden");
     }
+  }
+
+  function updatePlanExpiryWarning() {
+    const warning = document.getElementById('planExpiryWarning');
+    if (!userPlanExpiry || userPlan === 'free') {
+      warning.innerHTML = '';
+      return;
+    }
+
+    const daysLeft = Math.ceil((userPlanExpiry - new Date()) / (1000 * 60 * 60 * 24));
+    if (daysLeft <= 3) {
+      warning.innerHTML = `<div class="bg-orange-100 dark:bg-orange-900/30 border-2 border-orange-500 text-orange-800 dark:text-orange-200 p-4 rounded-2xl animate-scale-in"><span class="emoji text-2xl">⏰</span> <strong>تنبيه:</strong> اشتراكك ينتهي خلال ${daysLeft} أيام</div>`;
+    }
+  }
+
+  function updateAiLimitDisplay() {
+    const limit = userPlan === 'free'? 3 : userPlan === 'pro'? 5 : '∞';
+    const remaining = userPlan === 'max'? '∞' : limit - aiUsageToday;
+    document.getElementById('aiLimitText').textContent = remaining;
   }
 
   function initDashboard(user) {
@@ -206,7 +306,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       // Check limit for free plan
       if (userPlan === 'free' && transactions.length >= 50) {
         alert('وصلت للحد الأقصى 50 معاملة. رقي حسابك لـ Pro! 💎');
-        showModal('settingsModal');
+        window.location.href = 'pricing.html';
         return;
       }
 
@@ -258,7 +358,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
 
         addBtn.innerHTML = '<span class="emoji">✅</span> تم!';
         setTimeout(() => {
-          addBtn.innerHTML = '<span class="emoji">✨</span> إضافة';
+          addBtn.innerHTML = '<span class="emoji">✨</span> ' + t('add');
         }, 2000);
 
         console.log('Transaction added successfully');
@@ -266,7 +366,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
       } catch (error) {
         console.error('Error adding transaction:', error);
         alert("خطأ: " + error.message);
-        addBtn.innerHTML = '<span class="emoji">✨</span> إضافة';
+        addBtn.innerHTML = '<span class="emoji">✨</span> ' + t('add');
       } finally {
         addBtn.disabled = false;
       }
@@ -326,7 +426,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     });
 
     document.getElementById("transactionsList").innerHTML = monthTransactions.length === 0
-  ? '<div class="text-center text-gray-500 py-8"><span class="emoji text-6xl">📭</span><p class="mt-4">لا توجد معاملات في هذا الشهر</p></div>'
+? '<div class="text-center text-gray-500 py-8"><span class="emoji text-6xl">📭</span><p class="mt-4">لا توجد معاملات في هذا الشهر</p></div>'
       : monthTransactions.map(t => `
         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl animate-slide-up">
           <div class="flex items-center gap-3">
@@ -338,7 +438,6 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
               <p class="text-sm text-gray-500">${t.note || "بدون ملاحظة"} • ${t.createdAt.toDate().toLocaleDateString('ar-EG')}</p>
               ${t.invoiceUrl? `<a href="${t.invoiceUrl}" target="_blank" class="text-xs text-blue-500"><span class="emoji">🧾</span> فاتورة</a>` : ''}
             </div>
-          </div>
           <div class="flex items-center gap-2">
             <p class="font-black text-lg ${t.type === "income"? "text-green-600" : "text-red-600"}">${t.type === "income"? "+" : "-"}${formatCurrency(t.amount)}</p>
             <button onclick="editTransaction('${t.id}')" class="text-blue-500 hover:text-blue-700 p-2"><i class="fas fa-edit"></i></button>
@@ -349,6 +448,40 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
 
     updateChart(categoryData);
     updateMonthlyChart(monthlyData);
+    updateCurrentPlanDisplay();
+  }
+
+  function updateCurrentPlanDisplay() {
+    const planDiv = document.getElementById('currentPlan');
+    const limits = {
+      free: { trans: '50', ai: '3/يوم' },
+      pro: { trans: 'غير محدود', ai: '5/يوم' },
+      max: { trans: 'غير محدود', ai: 'غير محدود' }
+    };
+
+    const planNames = { free: 'مجاني', pro: 'Pro', max: 'Max' };
+    const expiryText = userPlanExpiry? `<br><small>ينتهي: ${userPlanExpiry.toLocaleDateString('ar-EG')}</small>` : '';
+
+    planDiv.innerHTML = `
+      <strong>خطتك الحالية: ${planNames[userPlan]}</strong>${expiryText}<br>
+      <small>المعاملات: ${limits[userPlan].trans} | AI: ${limits[userPlan].ai}</small>
+    `;
+
+    // Update plan buttons
+    const freeBtn = document.getElementById('freePlanBtn');
+    const proBtn = document.getElementById('proPlanBtn');
+    const maxBtn = document.getElementById('maxPlanBtn');
+
+    if (userPlan === 'free') {
+      freeBtn.className = 'w-full bg-gray-300 text-gray-600 py-2 rounded-xl cursor-not-allowed';
+      freeBtn.textContent = t('current_plan');
+    } else if (userPlan === 'pro') {
+      proBtn.className = 'w-full bg-gray-300 text-gray-600 py-2 rounded-xl cursor-not-allowed';
+      proBtn.textContent = t('current_plan');
+    } else if (userPlan === 'max') {
+      maxBtn.className = 'w-full bg-gray-300 text-gray-600 py-2 rounded-xl cursor-not-allowed';
+      maxBtn.textContent = t('current_plan');
+    }
   }
 
   window.editTransaction = (id) => {
@@ -403,7 +536,7 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
           label: 'المصروفات',
           data: Object.values(data).slice(-6),
           borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          backgroundColor: 'rgba(239, 68, 0.1)',
           tension: 0.4,
           fill: true
         }]
@@ -420,8 +553,8 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
     }
 
     const monthExpenses = transactions
-   .filter(t => t.type === 'expense' && t.createdAt.toDate().toISOString().slice(0, 7) === selectedMonth)
-   .reduce((sum, t) => sum + t.amount, 0);
+ .filter(t => t.type === 'expense' && t.createdAt.toDate().toISOString().slice(0, 7) === selectedMonth)
+ .reduce((sum, t) => sum + t.amount, 0);
 
     const percent = (monthExpenses / monthlyBudget * 100).toFixed(0);
 
@@ -447,24 +580,62 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
   };
 
   // AI Functions
-  window.openAI = () => {
-    if (userPlan === 'free') {
-      alert('المساعد الذكي متاح في Pro و Max فقط 💎\nرقي حسابك الآن!');
-      showModal('settingsModal');
+  window.openAI = async () => {
+    await updateAiLimit();
+    if (userPlan === 'free' && aiUsageToday >= 3) {
+      alert('وصلت للحد الأقصى 3 أسئلة اليوم. رقي حسابك لـ Pro! 💎');
+      window.location.href = 'pricing.html';
+      return;
+    }
+    if (userPlan === 'pro' && aiUsageToday >= 5) {
+      alert('وصلت للحد الأقصى 5 أسئلة اليوم. رقي حسابك لـ Max! 💎');
+      window.location.href = 'pricing.html';
       return;
     }
     showModal('aiModal');
-    document.getElementById('aiBadge').textContent = userPlan === 'max'? 'GPT-4' : 'Basic';
+    document.getElementById('aiBadge').textContent = userPlan === 'max'? 'GPT-4' : userPlan === 'pro'? 'Basic' : 'Free';
     document.getElementById('aiBadge').className = userPlan === 'max'? 'max-gradient px-3 py-1 rounded-full text-xs' : 'pro-gradient px-3 py-1 rounded-full text-xs';
   };
+
+  async function updateAiLimit() {
+    const today = new Date().toISOString().split('T')[0];
+    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+    const data = userDoc.data();
+
+    if (data.aiUsageDate!== today) {
+      await updateDoc(doc(db, 'users', currentUser.uid), { aiUsageToday: 0, aiUsageDate: today });
+      aiUsageToday = 0;
+    } else {
+      aiUsageToday = data.aiUsageToday || 0;
+    }
+
+    const limit = userPlan === 'free'? 3 : userPlan === 'pro'? 5 : '∞';
+    const remaining = userPlan === 'max'? '∞' : limit - aiUsageToday;
+    document.getElementById('aiLimitText').textContent = remaining;
+  }
 
   window.askAI = async () => {
     const input = document.getElementById('aiInput').value.trim();
     if (!input) return;
 
+    // Check limit
+    if (userPlan === 'free' && aiUsageToday >= 3) {
+      alert('وصلت للحد الأقصى اليوم');
+      return;
+    }
+    if (userPlan === 'pro' && aiUsageToday >= 5) {
+      alert('وصلت للحد الأقصى اليوم');
+      return;
+    }
+
     const chat = document.getElementById('aiChat');
     chat.innerHTML += `<div class="text-right"><div class="inline-block bg-blue-500 text-white px-4 py-2 rounded-2xl">${input}</div></div>`;
     document.getElementById('aiInput').value = '';
+
+    // Update usage
+    aiUsageToday++;
+    await updateDoc(doc(db, 'users', currentUser.uid), { aiUsageToday });
+    updateAiLimitDisplay();
 
     // AI Response
     const totalExp = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
@@ -500,43 +671,55 @@ if (window.location.pathname.includes('index') || window.location.pathname === '
   function handleAdminClick() {
     adminClicks++;
     if (adminClicks >= 5) {
-      const pass = prompt('🔐 Admin Password:');
-      if (pass === ADMIN_PASSWORD) {
-        const transId = prompt('رقم عملية الدفع:');
-        const email = prompt('إيميل العميل:');
-        const plan = prompt('الخطة (pro/max):');
-        const duration = prompt('المدة (monthly/yearly):');
-        if (transId && email && plan) {
-          activateSubscription(email, plan, duration, transId);
-        }
-      } else {
-        alert('كلمة سر غلط ❌');
-      }
+      showModal('adminModal');
       adminClicks = 0;
     }
   }
 
-  async function activateSubscription(email, plan, duration, transId) {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('email', '==', email));
-    const snapshot = await getDocs(q);
+  window.activatePlanBtn?.addEventListener('click', async () => {
+    const pass = document.getElementById('adminPassInput').value;
+    const transId = document.getElementById('transIdInput').value;
+    const email = document.getElementById('customerEmailInput').value;
+    const plan = document.getElementById('planTypeInput').value;
 
-    if (!snapshot.empty) {
-      const userDoc = snapshot.docs[0];
-      const expiry = new Date();
-      if (duration === 'yearly') expiry.setFullYear(expiry.getFullYear() + 1);
-      else expiry.setMonth(expiry.getMonth() + 1);
-
-      await updateDoc(doc(db, 'users', userDoc.id), {
-        plan,
-        planExpiry: Timestamp.fromDate(expiry),
-        transId,
-        activatedBy: currentUser.email,
-        activatedAt: Timestamp.now()
-      });
-      alert(`✅ تم تفعيل ${plan.toUpperCase()} للعميل ${email}\nحتى ${expiry.toLocaleDateString('ar-EG')}`);
-    } else {
-      alert('❌ العميل غير موجود');
+    if (pass!== ADMIN_PASSWORD) {
+      alert('كلمة سر غلط ❌');
+      return;
     }
-  }
+
+    if (!transId ||!email ||!plan) {
+      alert('املأ كل الحقول ❌');
+      return;
+    }
+
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const userDoc = snapshot.docs[0];
+        const expiry = new Date();
+        const isYearly = plan === 'max';
+        if (isYearly) expiry.setFullYear(expiry.getFullYear() + 1);
+        else expiry.setMonth(expiry.getMonth() + 1);
+
+        await updateDoc(doc(db, 'users', userDoc.id), {
+          plan,
+          planExpiry: Timestamp.fromDate(expiry),
+          transId,
+          activatedBy: currentUser.email,
+          activatedAt: Timestamp.now()
+        });
+
+        const activationLink = `${window.location.origin}/index.html?activated=${transId}`;
+        alert(`✅ تم تفعيل ${plan.toUpperCase()} للعميل ${email}\n\nحتى ${expiry.toLocaleDateString('ar-EG')}\n\nلينك التفعيل:\n${activationLink}\n\nابعت اللينك للعميل`);
+        hideModal('adminModal');
+      } else {
+        alert('❌ العميل غير موجود. خليه يسجل الأول');
+      }
+    } catch (error) {
+      alert('خطأ: ' + error.message);
+    }
+  });
 }
