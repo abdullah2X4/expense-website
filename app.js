@@ -1,700 +1,381 @@
-// Firebase Config
+// ===== Masareefy V6 - Firebase v9 + Settings =====
+
+// 1. Imports
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+// 2. Firebase Config
 const firebaseConfig = {
-    apiKey: "AIzaSyBS3FCovS0LmOGgWSIOxoL3kiKe5mjkl1k",
-    authDomain: "masarefy-v6.firebaseapp.com",
-    projectId: "masarefy-v6",
-    storageBucket: "masarefy-v6.appspot.com",
-    messagingSenderId: "362855388821",
-    appId: "1:362855388821:web:6bc34c415c520f60102d9c"
+  apiKey: "AIzaSyBS3FCovS0LmOGgWSIOxoL3kiKe5mjkl1k",
+  authDomain: "masarefy-v6.firebaseapp.com",
+  projectId: "masarefy-v6",
+  storageBucket: "masarefy-v6.firebasestorage.app",
+  messagingSenderId: "362855388821",
+  appId: "1:362855388821:web:6bc34c415c520f60102d9c",
+  measurementId: "G-LNXCG5P1BJ"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
 
+// 3. Initialize
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let expenses = [];
 let currentUser = null;
-let userPlan = 'free';
-let planExpiry = null;
-let transactions = [];
-let chart = null;
-let logoClicks = 0;
-let isAdmin = false;
-let currentLang = localStorage.getItem('lang') || 'ar';
-let currentCurrency = localStorage.getItem('currency') || 'EGP';
-let exchangeRate = 50;
-let monthlyBudget = 0;
-
-const PAYMENT_INFO = {
-    number: "01121898023",
-    methods: "Etisalat Cash, Vodafone Cash, Orange Cash",
-    methodsAr: "اتصالات كاش أو فودافون كاش أو أورانج كاش",
-    plans: {
-        pro_month: { priceEGP: 25, priceUSD: 0.5, days: 30, name: 'Pro' },
-        max_month: { priceEGP: 50, priceUSD: 1, days: 30, name: 'Max' },
-        max_year: { priceEGP: 550, priceUSD: 11, days: 365, name: 'Max VIP Yearly' }
-    }
+let settings = {
+  lang: 'ar',
+  currency: 'EGP',
+  theme: 'light'
 };
 
-const LANG = {
-    ar: {
-        dir: 'rtl', lang: 'ar', currencySymbol: 'ج.م',
-        appName: 'مصاريفي V6 🤖', loginTitle: 'مصاريفي V6',
-        loginSubtitle: 'إدارة أموالك بالذكاء الاصطناعي',
-        googleBtn: 'المتابعة باستخدام جوجل', choosePlan: 'اختر الخطة المناسبة لك',
-        startFree: 'ابدأ مجاناً', mostPopular: 'الأكثر شيوعاً',
-        subscribeNow: 'اشترك الآن', subscribeVIP: 'اشترك VIP',
-        save50: 'وفر 50 جنيه', totalExpense: 'إجمالي المصاريف',
-        totalCount: 'عدد المعاملات', thisMonth: 'هذا الشهر',
-        addExpense: 'إضافة مصروف جديد', amount: 'المبلغ',
-        category: 'التصنيف', description: 'الوصف', add: 'إضافة',
-        analyzeAI: '🤖 حلل مصاريفي بالذكاء الاصطناعي VIP',
-        chartTitle: 'الرسم البياني', exportCSV: 'تصدير CSV',
-        lastTransactions: 'آخر المعاملات', noDesc: 'بدون وصف',
-        logout: 'خروج', aiVIP: '💬 AI VIP',
-        aiTitle: 'المساعد المالي الذكي VIP 🤖💎',
-        askAI: 'اسأل عن مصاريفك...', send: 'إرسال',
-        adminTitle: 'وضع الأدمن 🔐', password: 'كلمة السر',
-        enter: 'دخول', cancel: 'إلغاء', wrongPass: 'كلمة سر خاطئة',
-        fillFields: 'املأ المبلغ والتصنيف', maxReached: 'وصلت للحد الأقصى في الخطة المجانية',
-        deleteConfirm: 'حذف المعاملة؟', exportOnly: 'التصدير متاح في Pro و Max فقط',
-        aiOnly: 'المساعد الذكي متاح في خطة Max فقط بـ 50 جنيه 🚀',
-        adminActivated: 'تم تفعيل وضع الأدمن 🔓',
-        userId: 'اكتب رقم العملية/ID بتاع العميل:\n(أول 8 حروف من UID)',
-        userNotFound: 'المستخدم مش موجود! تأكد من رقم العملية',
-        choosePlanNum: 'اختار الخطة:\n1 = Pro شهر (25 جنيه)\n2 = Max شهر (50 جنيه)\n3 = Max سنة (550 جنيه)\n\nاكتب رقم:',
-        wrongChoice: 'اختيار خاطئ', activated: '✅ تم تفعيل',
-        expires: 'ينتهي:', sendLink: 'ابعتله اللينك ده:',
-        planExpired: 'انتهى اشتراكك! جدد عشان تكمل',
-        planExpiredFree: 'انتهى اشتراكك! تم تحويلك للخطة المجانية',
-        subscribe: 'للاشتراك في', price: 'السعر:', duration: 'المدة:',
-        day: 'يوم', sendTo: 'حول على:', sendScreen: 'وبعد التحويل ابعت سكرين + رقم العملية على واتس',
-        clickOK: 'ضغط OK لو حولت خلاص',
-        orderRegistered: 'تم تسجيل طلبك ✅\nرقم العملية:',
-        sendWithScreen: 'ابعت الرقم ده مع سكرين التحويل على واتس:',
-        willActivate: 'هنفعل الخطة خلال ساعة',
-        perMonth: '/شهر', perYear: '/سنة', instead: 'بدل 600 جنيه',
-        thinking: 'بفكر', payment: 'للدفع: اتصالات كاش أو فودافون كاش أو أورانج كاش',
-        currency: 'العملة', language: 'اللغة', english: 'English', arabic: 'العربية',
-        egyptian: 'جنيه مصري', dollar: 'دولار أمريكي',
-        now: 'الآن', month: 'شهر', year: 'سنة',
-        user: 'المستخدم', email: 'الإيميل', upgrade: 'ترقية 🚀',
-        settings: 'الإعدادات ⚙️', budget: 'الميزانية 💰',
-        budgetTitle: 'الميزانية الشهرية 💰', budgetAmountLabel: 'حدد ميزانيتك الشهرية',
-        saveBudget: 'حفظ الميزانية', clearBudget: 'إلغاء الميزانية',
-        budgetSaved: 'تم حفظ الميزانية ✅', budgetCleared: 'تم إلغاء الميزانية',
-        budgetExceeded: '⚠️ تجاوزت الميزانية!', budgetWarning: '⚠️ اقتربت من الميزانية',
-        budgetLabel: 'الميزانية الشهرية', settingsTitle: 'الإعدادات ⚙️',
-        languageLabel: 'اللغة', currencyLabel: 'العملة',
-        prediction: 'بناءً على مصاريفك الحالية، أتوقع الشهر الجاي هتصرف حوالي',
-        willSpend: 'هتصرف', ifContinue: 'لو كملت بنفس المعدل. تقدر توفر لو قللت',
-        save: 'وفر', savingPlan: 'خطة توفير مخصصة لك:\n• قلل',
-        savePerMonth: ' شهرياً\n• راجع المعاملات اللي فوق',
-        checkAbove: 'تحقق من المصاريف اللي فوق', ifCommit: 'لو التزمت بالخطة دي هتوفر',
-        monthly: 'شهرياً و', yearly: 'سنوياً!',
-        fullAnalysis: 'تحليل شامل لمصاريفك:\n• إجمالي المصاريف:',
-        topCategory: 'أعلى بند صرف:', avgTransaction: 'متوسط المعاملة:',
-        transactionCount: 'عدد المعاملات:', warning: '⚠️ تنبيه:',
-        takes: 'واخد', ofExpenses: '% من مصاريفك',
-        vipResponse: 'كمساعد مالي VIP، فهمت سؤالك عن',
-        basedOn: 'بناءً على تحليل', transactions: 'معاملة، إجمالي مصاريفك',
-        topItem: 'أعلى بند عندك هو', whatElse: 'عايز تفاصيل أكتر عن إيه؟',
-        fullAnalysisPlan: 'اعملي تحليل شامل لمصاريفي وخطة توفير',
-        aiWelcome: 'أهلاً بيك! أنا مساعدك المالي الذكي 🤖\nأقدر أحلل مصاريفك، أتوقع صرفك، وأعملك خطة توفير مخصصة.\nاسألني عن أي حاجة!'
-    },
-    en: {
-        dir: 'ltr', lang: 'en', currencySymbol: '$',
-        appName: 'Masarefy V6 🤖', loginTitle: 'Masarefy V6',
-        loginSubtitle: 'Manage your money with AI',
-        googleBtn: 'Continue with Google', choosePlan: 'Choose the right plan for you',
-        startFree: 'Start Free', mostPopular: 'Most Popular',
-        subscribeNow: 'Subscribe Now', subscribeVIP: 'Subscribe VIP',
-        save50: 'Save 50 EGP', totalExpense: 'Total Expenses',
-        totalCount: 'Transactions Count', thisMonth: 'This Month',
-        addExpense: 'Add New Expense', amount: 'Amount',
-        category: 'Category', description: 'Description', add: 'Add',
-        analyzeAI: '🤖 Analyze My Expenses with AI VIP',
-        chartTitle: 'Chart', exportCSV: 'Export CSV',
-        lastTransactions: 'Latest Transactions', noDesc: 'No description',
-        logout: 'Logout', aiVIP: '💬 AI VIP',
-        aiTitle: 'Smart Financial Assistant VIP 🤖💎',
-        askAI: 'Ask about your expenses...', send: 'Send',
-        adminTitle: 'Admin Mode 🔐', password: 'Password',
-        enter: 'Enter', cancel: 'Cancel', wrongPass: 'Wrong password',
-        fillFields: 'Fill amount and category', maxReached: 'You reached the free plan limit',
-        deleteConfirm: 'Delete transaction?', exportOnly: 'Export available in Pro & Max only',
-        aiOnly: 'AI Assistant available in Max plan only for 50 EGP 🚀',
-        adminActivated: 'Admin mode activated 🔓',
-        userId: 'Enter customer transaction ID:\n(First 8 chars of UID)',
-        userNotFound: 'User not found! Check transaction ID',
-        choosePlanNum: 'Choose plan:\n1 = Pro Month (25 EGP)\n2 = Max Month (50 EGP)\n3 = Max Year (550 EGP)\n\nEnter number:',
-        wrongChoice: 'Wrong choice', activated: '✅ Activated',
-        expires: 'Expires:', sendLink: 'Send him this link:',
-        planExpired: 'Your subscription expired! Renew to continue',
-        planExpiredFree: 'Your subscription expired! Moved to free plan',
-        subscribe: 'Subscribe to', price: 'Price:', duration: 'Duration:',
-        day: 'day', sendTo: 'Send to:', sendScreen: 'After transfer, send screenshot + transaction ID on WhatsApp',
-        clickOK: 'Click OK if you transferred',
-        orderRegistered: 'Order registered ✅\nTransaction ID:',
-        sendWithScreen: 'Send this ID with transfer screenshot on WhatsApp:',
-        willActivate: 'We will activate within 1 hour',
-        perMonth: '/month', perYear: '/year', instead: 'Instead of 600 EGP',
-        thinking: 'Thinking', payment: 'Payment: Etisalat Cash, Vodafone Cash, or Orange Cash',
-        currency: 'Currency', language: 'Language', english: 'English', arabic: 'العربية',
-        egyptian: 'Egyptian Pound', dollar: 'US Dollar',
-        now: 'Now', month: 'month', year: 'year',
-        user: 'User', email: 'Email', upgrade: 'Upgrade 🚀',
-        settings: 'Settings ⚙️', budget: 'Budget 💰',
-        budgetTitle: 'Monthly Budget 💰', budgetAmountLabel: 'Set your monthly budget',
-        saveBudget: 'Save Budget', clearBudget: 'Clear Budget',
-        budgetSaved: 'Budget saved ✅', budgetCleared: 'Budget cleared',
-        budgetExceeded: '⚠️ Budget exceeded!', budgetWarning: '⚠️ Near budget limit',
-        budgetLabel: 'Monthly Budget', settingsTitle: 'Settings ⚙️',
-        languageLabel: 'Language', currencyLabel: 'Currency',
-        prediction: 'Based on your current expenses, I predict next month you will spend around',
-        willSpend: 'You will spend', ifContinue: 'if you continue at the same rate. You can save if you reduce',
-        save: 'Save', savingPlan: 'Custom saving plan for you:\n• Reduce',
-        savePerMonth: ' monthly\n• Review transactions above',
-        checkAbove: 'Check expenses above', ifCommit: 'If you commit to this plan you will save',
-        monthly: 'monthly and', yearly: 'yearly!',
-        fullAnalysis: 'Full analysis of your expenses:\n• Total expenses:',
-        topCategory: 'Top category:', avgTransaction: 'Average transaction:',
-        transactionCount: 'Transaction count:', warning: '⚠️ Warning:',
-        takes: 'takes', ofExpenses: '% of your expenses',
-        vipResponse: 'As your VIP financial assistant, I understood your question about',
-        basedOn: 'Based on analysis of', transactions: 'transactions, your total expenses',
-        topItem: 'Your top item is', whatElse: 'What else would you like to know?',
-        fullAnalysisPlan: 'Do a full analysis of my expenses and saving plan',
-        aiWelcome: 'Welcome! I am your smart financial assistant 🤖\nI can analyze your expenses, predict your spending, and create a custom saving plan.\nAsk me anything!'
-    }
+// 4. Translations
+const t = {
+  ar: {
+    thisMonth: 'إجمالي هذا الشهر',
+    chart: 'الرسوم البيانية',
+    search: 'بحث بالاسم',
+    searchPlaceholder: 'اكتب اسم المصروف...',
+    filterMonth: 'فلترة بالشهر',
+    noExpenses: 'لا توجد مصاريف',
+    settings: 'الإعدادات',
+    language: 'اللغة',
+    currency: 'العملة',
+    appMode: 'وضع التطبيق',
+    light: 'فاتح',
+    dark: 'داكن',
+    deleteConfirm: 'متأكد عايز تمسح المصروف؟'
+  },
+  en: {
+    thisMonth: 'This Month',
+    chart: 'Expense Chart',
+    search: 'Search by name',
+    searchPlaceholder: 'Type expense name...',
+    filterMonth: 'Filter by month',
+    noExpenses: 'No expenses found',
+    settings: 'Settings',
+    language: 'Language',
+    currency: 'Currency',
+    appMode: 'App Mode',
+    light: 'Light',
+    dark: 'Dark',
+    deleteConfirm: 'Are you sure you want to delete?'
+  }
 };
 
-function t(key) { return LANG[currentLang][key] || key; }
+const currencies = {
+  EGP: { symbol: 'ج.م', name: 'جنيه مصري' },
+  USD: { symbol: '$', name: 'US Dollar' },
+  SAR: { symbol: 'ر.س', name: 'Saudi Riyal' },
+  AED: { symbol: 'د.إ', name: 'UAE Dirham' }
+};
 
-function formatPrice(egpPrice) {
-    if (currentCurrency === 'USD') {
-        const usd = egpPrice / exchangeRate;
-        return `${usd.toFixed(2)} ${t('currencySymbol')}`;
+// 5. Auth State
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    await loadSettings();
+    applyTheme();
+    if (window.location.pathname.includes('login.html')) {
+      window.location.href = 'index.html';
+    } else {
+      loadExpenses();
+      renderSettingsModal();
     }
-    return `${egpPrice} ${t('currencySymbol')}`;
-}
-
-function formatAmount(amount) {
-    if (currentCurrency === 'USD') {
-        return `$${(amount / exchangeRate).toFixed(2)}`;
+  } else {
+    if (!window.location.pathname.includes('login.html')) {
+      window.location.href = 'login.html';
     }
-    return `${amount.toFixed(2)} ${t('currencySymbol')}`;
-}
+  }
+});
 
-function toggleLang() {
-    currentLang = currentLang === 'ar'? 'en' : 'ar';
-    localStorage.setItem('lang', currentLang);
-    location.reload();
-}
-
-function toggleCurrency() {
-    currentCurrency = currentCurrency === 'EGP'? 'USD' : 'EGP';
-    localStorage.setItem('currency', currentCurrency);
-    location.reload();
-}
-
-function toggleSettings() {
-    document.getElementById('settingsModal').classList.toggle('active');
-    if (document.getElementById('settingsModal').classList.contains('active')) {
-        document.getElementById('langBtn').textContent = currentLang === 'ar'? t('english') : t('arabic');
-        document.getElementById('currencyBtn').textContent = currentCurrency === 'EGP'? `$ ${t('dollar')}` : `ج.م ${t('egyptian')}`;
-    }
-}
-
-function toggleBudget() {
-    document.getElementById('budgetModal').classList.toggle('active');
-    if (document.getElementById('budgetModal').classList.contains('active') && monthlyBudget > 0) {
-        document.getElementById('budgetInput').value = monthlyBudget;
-    }
-}
-
-async function saveBudget() {
-    const budget = parseFloat(document.getElementById('budgetInput').value);
-    if (!budget || budget <= 0) return alert(t('fillFields'));
-
-    monthlyBudget = budget;
-    await db.collection('users').doc(currentUser.uid).update({ monthlyBudget: budget });
-    toggleBudget();
-    updateBudgetBar();
-    alert(t('budgetSaved'));
-}
-
-async function clearBudget() {
-    monthlyBudget = 0;
-    await db.collection('users').doc(currentUser.uid).update({ monthlyBudget: 0 });
-    toggleBudget();
-    document.getElementById('budgetBarContainer').classList.add('hidden');
-    alert(t('budgetCleared'));
-}
-
-function updateBudgetBar() {
-    if (monthlyBudget <= 0) {
-        document.getElementById('budgetBarContainer').classList.add('hidden');
-        return;
-    }
-
-    const monthTotal = transactions.filter(tr => {
-        const d = tr.createdAt?.toDate();
-        const now = new Date();
-        return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).reduce((sum, tr) => sum + tr.amount, 0);
-
-    const percentage = Math.min((monthTotal / monthlyBudget) * 100, 100);
-    document.getElementById('budgetFill').style.width = percentage + '%';
-    document.getElementById('budgetText').textContent = `${formatAmount(monthTotal)} / ${formatAmount(monthlyBudget)}`;
-    document.getElementById('budgetBarContainer').classList.remove('hidden');
-
-    if (percentage >= 100) {
-        document.getElementById('budgetText').textContent += ` ${t('budgetExceeded')}`;
-    } else if (percentage >= 80) {
-        document.getElementById('budgetText').textContent += ` ${t('budgetWarning')}`;
-    }
-}
-
-function applyLang() {
-    document.documentElement.lang = t('lang');
-    document.documentElement.dir = t('dir');
-    const ids = ['appName', 'logo', 'totalExpenseLabel', 'totalCountLabel', 'monthTotalLabel', 'addExpenseTitle', 'addBtn', 'aiAnalyzeBtn', 'chartTitle', 'exportBtn', 'lastTransactionsTitle', 'logoutBtn', 'aiTitle', 'sendBtn', 'adminTitle', 'adminEnterBtn', 'adminCancelBtn', 'upgradeBtn', 'settingsTitle', 'languageLabel', 'currencyLabel', 'budgetTitle', 'budgetAmountLabel', 'saveBudgetBtn', 'clearBudgetBtn', 'budgetLabel', 'amount', 'category', 'description', 'aiInput', 'adminPass'];
-    ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (id === 'amount') el.placeholder = t('amount');
-            else if (id === 'category') el.placeholder = t('category');
-            else if (id === 'description') el.placeholder = t('description');
-            else if (id === 'aiInput') el.placeholder = t('askAI');
-            else if (id === 'adminPass') el.placeholder = t('password');
-            else if (id === 'budgetInput') el.placeholder = currentLang === 'ar'? '5000' : '5000';
-            else el.textContent = t(id.replace('Label', '').replace('Title', '').replace('Btn', ''));
-        }
-    });
-}
-
-function initLogin() {
-    applyLang();
-    document.getElementById('loginTitle').textContent = t('loginTitle');
-    document.getElementById('loginSubtitle').textContent = t('loginSubtitle');
-    document.getElementById('googleBtnText').textContent = t('googleBtn');
-    document.getElementById('paymentText').textContent = t('payment');
-    document.getElementById('paymentNumber').textContent = PAYMENT_INFO.number;
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (!userDoc.exists) {
-                await db.collection('users').doc(user.uid).set({
-                    email: user.email, displayName: user.displayName, photoURL: user.photoURL,
-                    plan: null, planExpiry: null, currency: currentCurrency, monthlyBudget: 0,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                window.location.href = 'pricing.html';
-            } else if (!userDoc.data().plan) {
-                window.location.href = 'pricing.html';
-            } else {
-                checkPlanExpiry(userDoc.data());
-            }
-        }
-    });
-}
-
-async function signInWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
+// 6. Login
+const loginBtn = document.getElementById('loginBtn');
+if (loginBtn) {
+  loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
     try {
-        await auth.signInWithPopup(provider);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-        document.getElementById('error').textContent = 'Error: ' + error.message;
-        document.getElementById('error').classList.remove('hidden');
+      alert('خطأ في تسجيل الدخول: ' + error.message);
     }
+  });
 }
 
-function checkPlanExpiry(userData) {
-    const now = new Date();
-    if (userData.planExpiry && userData.planExpiry.toDate() < now) {
-        alert(t('planExpired'));
-        window.location.href = 'pricing.html';
-    } else {
-        window.location.href = 'index.html';
-    }
+// 7. Logout
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => signOut(auth));
 }
 
-function initPricing() {
-    applyLang();
-    document.getElementById('choosePlanTitle').textContent = t('choosePlan');
-    document.getElementById('paymentText').textContent = t('payment');
-    document.getElementById('paymentNumber').textContent = PAYMENT_INFO.number;
-    document.getElementById('startFreeSub').textContent = t('loginSubtitle');
-    document.getElementById('freePerMonth').textContent = t('perMonth');
-    document.getElementById('startFreeBtn').textContent = t('startFree');
-    document.getElementById('mostPopular').textContent = t('mostPopular');
-    document.getElementById('subscribeNowBtn').textContent = t('subscribeNow');
-    document.getElementById('maxMonthlyTitle').textContent = t('appName') + ' Max';
-    document.getElementById('subscribeVIPBtn').textContent = t('subscribeVIP');
-    document.getElementById('save50').textContent = t('save50');
-    document.getElementById('maxYearlyTitle').textContent = t('appName') + ' Max VIP';
-    document.getElementById('subscribeYearlyBtn').textContent = t('subscribeVIP');
-    updatePricingCards();
-    auth.onAuthStateChanged(user => {
-        if (!user) window.location.href = 'login.html';
+// 8. Settings - Load/Save
+async function loadSettings() {
+  const docRef = doc(db, 'users', currentUser.uid);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists() && docSnap.data().settings) {
+    settings = {...settings,...docSnap.data().settings };
+  }
+  document.documentElement.lang = settings.lang;
+}
+
+async function saveSettings() {
+  await setDoc(doc(db, 'users', currentUser.uid), { settings }, { merge: true });
+  applyTheme();
+  renderAll();
+}
+
+// 9. Theme
+function applyTheme() {
+  if (settings.theme === 'dark') {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('bg-gray-900', 'text-white');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('bg-gray-900', 'text-white');
+  }
+}
+
+// 10. Settings Modal
+function renderSettingsModal() {
+  const settingsBtn = document.getElementById('settingsBtn');
+  if (!settingsBtn) return;
+
+  // امسح المودال القديم
+  const oldModal = document.getElementById('settingsModal');
+  if (oldModal) oldModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'settingsModal';
+  modal.className = 'hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+  modal.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-11/12 max-w-md">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold">${t[settings.lang].settings}</h2>
+        <button id="closeSettings" class="text-2xl">&times;</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">${t[settings.lang].language}</label>
+          <select id="langSelect" class="w-full border rounded-lg px-4 py-2 dark:bg-gray-700">
+            <option value="ar" ${settings.lang === 'ar'? 'selected' : ''}>العربية</option>
+            <option value="en" ${settings.lang === 'en'? 'selected' : ''}>English</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-2">${t[settings.lang].currency}</label>
+          <select id="currencySelect" class="w-full border rounded-lg px-4 py-2 dark:bg-gray-700">
+            ${Object.keys(currencies).map(c => `
+              <option value="${c}" ${settings.currency === c? 'selected' : ''}>${currencies[c].name} ${currencies[c].symbol}</option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-2">${t[settings.lang].appMode}</label>
+          <div class="flex gap-2">
+            <button id="lightMode" class="flex-1 py-2 rounded-lg border ${settings.theme === 'light'? 'bg-blue-500 text-white' : 'dark:border-gray-600'}">
+              <i class="fas fa-sun"></i> ${t[settings.lang].light}
+            </button>
+            <button id="darkMode" class="flex-1 py-2 rounded-lg border ${settings.theme === 'dark'? 'bg-blue-500 text-white' : 'dark:border-gray-600'}">
+              <i class="fas fa-moon"></i> ${t[settings.lang].dark}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Events
+  settingsBtn.onclick = () => modal.classList.remove('hidden');
+  document.getElementById('closeSettings').onclick = () => modal.classList.add('hidden');
+  modal.onclick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+
+  document.getElementById('langSelect').onchange = async (e) => {
+    settings.lang = e.target.value;
+    await saveSettings();
+    renderSettingsModal();
+  };
+
+  document.getElementById('currencySelect').onchange = async (e) => {
+    settings.currency = e.target.value;
+    await saveSettings();
+  };
+
+  document.getElementById('lightMode').onclick = async () => {
+    settings.theme = 'light';
+    await saveSettings();
+    renderSettingsModal();
+  };
+
+  document.getElementById('darkMode').onclick = async () => {
+    settings.theme = 'dark';
+    await saveSettings();
+    renderSettingsModal();
+  };
+}
+
+// 11. Load Expenses
+function loadExpenses() {
+  const q = query(collection(db, 'users', currentUser.uid, 'expenses'), orderBy('date', 'desc'));
+  onSnapshot(q, (snapshot) => {
+    expenses = [];
+    snapshot.forEach((doc) => {
+      expenses.push({ id: doc.id,...doc.data() });
     });
+    renderAll();
+    setupFilters();
+  });
 }
 
-function updatePricingCards() {
-    const plans = PAYMENT_INFO.plans;
-    document.getElementById('proPrice').textContent = formatPrice(plans.pro_month.priceEGP) + t('perMonth');
-    document.getElementById('maxMonthPrice').textContent = formatPrice(plans.max_month.priceEGP) + t('perMonth');
-    document.getElementById('maxYearPrice').textContent = formatPrice(plans.max_year.priceEGP) + t('perYear');
-    document.getElementById('maxYearInstead').textContent = `${t('instead')} ${formatPrice(600)}`;
-}
-
-async function selectPlan(planType) {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    if (planType === 'free') {
-        await db.collection('users').doc(user.uid).update({ plan: 'free', planExpiry: null });
-        window.location.href = 'index.html';
-    } else {
-        const plan = PAYMENT_INFO.plans[planType];
-        const confirmPay = confirm(`${t('subscribe')} ${plan.name}\n${t('price')} ${formatPrice(plan.priceEGP)}\n${t('duration')} ${plan.days} ${t('day')}\n\n${t('sendTo')}\n${currentLang === 'ar'? PAYMENT_INFO.methodsAr : PAYMENT_INFO.methods}\n${PAYMENT_INFO.number}\n\n${t('sendScreen')}\n\n${t('clickOK')}`);
-        if (confirmPay) {
-            await db.collection('users').doc(user.uid).update({
-                plan: 'pending', pendingPayment: planType,
-                requestedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            alert(`${t('orderRegistered')} ${user.uid.slice(0,8).toUpperCase()}\n${t('sendWithScreen')} ${PAYMENT_INFO.number}\n${t('willActivate')}`);
-            window.location.href = 'index.html';
-        }
-    }
-}
-
-function initApp() {
-    applyLang();
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) { window.location.href = 'login.html'; return; }
-        currentUser = user;
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        if (!userDoc.exists ||!userDoc.data().plan) { window.location.href = 'pricing.html'; return; }
-
-        const userData = userDoc.data();
-        userPlan = userData.plan;
-        planExpiry = userData.planExpiry;
-        if (userData.currency) currentCurrency = userData.currency;
-        if (userData.monthlyBudget) monthlyBudget = userData.monthlyBudget;
-
-        if (planExpiry && planExpiry.toDate() < new Date() && userPlan!== 'free') {
-            await db.collection('users').doc(user.uid).update({ plan: 'free', planExpiry: null });
-            alert(t('planExpiredFree'));
-            window.location.href = 'pricing.html';
-            return;
-        }
-
-        document.getElementById('userPhoto').src = user.photoURL;
-        let badgeText = userPlan.toUpperCase();
-        if (planExpiry) {
-            const daysLeft = Math.ceil((planExpiry.toDate() - new Date()) / (1000 * 60 * 60 * 24));
-            badgeText += ` - ${daysLeft} ${currentLang === 'ar'? 'يوم' : 'days'}`;
-        }
-        document.getElementById('planBadge').textContent = badgeText;
-        document.getElementById('app').classList.remove('hidden');
-
-        if (userPlan === 'free' || userPlan === 'pro') {
-            document.getElementById('upgradeBtn').classList.remove('hidden');
-        }
-        if (userPlan === 'max') {
-            document.getElementById('aiBtn').classList.remove('hidden');
-            document.getElementById('aiAnalyzeBtn').classList.remove('hidden');
-        }
-        if (userPlan!== 'free') document.getElementById('exportBtn').classList.remove('hidden');
-
-        loadTransactions();
-        setupAdminClicks();
+// 12. Add Expense
+const addExpenseBtn = document.getElementById('addExpenseBtn');
+if (addExpenseBtn) {
+  addExpenseBtn.addEventListener('click', async () => {
+    const name = document.getElementById('expenseName').value;
+    const amount = parseFloat(document.getElementById('expenseAmount').value);
+    const date = document.getElementById('expenseDate').value;
+    if (!name ||!amount ||!date) return alert('املأ كل الحقول');
+    await addDoc(collection(db, 'users', currentUser.uid, 'expenses'), {
+      name, amount, date, createdAt: serverTimestamp()
     });
+    document.getElementById('expenseName').value = '';
+    document.getElementById('expenseAmount').value = '';
+  });
 }
 
-function loadTransactions() {
-    db.collection('transactions').where('userId', '==', currentUser.uid).onSnapshot(snapshot => {
-        transactions = [];
-        snapshot.forEach(doc => {
-            transactions.push({ id: doc.id,...doc.data() });
-        });
-        transactions.sort((a, b) => {
-            const dateA = a.createdAt?.toDate() || new Date(0);
-            const dateB = b.createdAt?.toDate() || new Date(0);
-            return dateB - dateA;
-        });
-        updateUI();
-        updateBudgetBar();
-    });
+// 13. Render All
+function renderAll() {
+  renderMonthTotal();
+  renderExpensesList();
+  renderChart();
+  updateLabels();
 }
 
-async function addTransaction() {
-    const amount = parseFloat(document.getElementById('amount').value);
-    const category = document.getElementById('category').value.trim();
-    const description = document.getElementById('description').value.trim();
-
-    if (!amount ||!category) return alert(t('fillFields'));
-    if (userPlan === 'free' && transactions.length >= 50) return alert(t('maxReached'));
-
-    try {
-        await db.collection('transactions').add({
-            userId: currentUser.uid, amount, category, description,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        document.getElementById('amount').value = '';
-        document.getElementById('category').value = '';
-        document.getElementById('description').value = '';
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
+// 14. Update Labels with Translation
+function updateLabels() {
+  const lang = settings.lang;
+  const ids = {
+    monthTotalLabel: t[lang].thisMonth,
+    chartTitle: t[lang].chart,
+    searchLabel: t[lang].search,
+    monthFilterLabel: t[lang].filterMonth
+  };
+  Object.keys(ids).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = ids[id];
+  });
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.placeholder = t[lang].searchPlaceholder;
 }
 
-async function deleteTransaction(id) {
-    if (confirm(t('deleteConfirm'))) {
-        await db.collection('transactions').doc(id).delete();
-    }
+// 15. Month Total
+function renderMonthTotal() {
+  const now = new Date();
+  const monthTotal = expenses
+ .filter(e => {
+      const d = new Date(e.date);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    })
+ .reduce((sum, e) => sum + e.amount, 0);
+
+  const totalEl = document.getElementById('monthTotal');
+  if (totalEl) totalEl.textContent = monthTotal.toFixed(2) + ' ' + currencies[settings.currency].symbol;
 }
 
-function updateUI() {
-    const total = transactions.reduce((sum, tr) => sum + tr.amount, 0);
-    const monthTotal = transactions.filter(tr => {
-        const d = tr.createdAt?.toDate();
-        const now = new Date();
-        return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).reduce((sum, tr) => sum + tr.amount, 0);
+// 16. Expenses List
+function renderExpensesList(list = expenses) {
+  const container = document.getElementById('expensesList');
+  if (!container) return;
+  container.innerHTML = list.length? '' : `<p class="text-center text-gray-500 py-8">${t[settings.lang].noExpenses}</p>`;
 
-    document.getElementById('totalExpense').textContent = formatAmount(total);
-    document.getElementById('totalCount').textContent = transactions.length;
-    document.getElementById('monthTotal').textContent = formatAmount(monthTotal);
-
-    const categories = {};
-    transactions.forEach(tr => {
-        categories[tr.category] = (categories[tr.category] || 0) + tr.amount;
-    });
-
-    if (chart) chart.destroy();
-    chart = new Chart(document.getElementById('chart'), {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(categories),
-            datasets: [{
-                data: Object.values(categories).map(v => currentCurrency === 'USD'? v / exchangeRate : v),
-                backgroundColor: ['#8b5cf6', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444']
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: true, animation: { duration: 1000 } }
-    });
-
-    document.getElementById('transactions').innerHTML = transactions.slice(0, 10).map((tr, index) => {
-        const date = tr.createdAt?.toDate().toLocaleDateString(currentLang === 'ar'? 'ar-EG' : 'en-US') || t('now');
-        const isNew = index === 0 && Date.now() - (tr.createdAt?.toDate().getTime() || 0) < 2000;
-        return `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg ${isNew? 'transaction-new' : ''}">
-            <div>
-                <div class="font-bold">${tr.category}</div>
-                <div class="text-sm text-gray-500">${tr.description || t('noDesc')} - ${date}</div>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="text-lg font-bold text-red-500">${formatAmount(tr.amount)}</div>
-                <button onclick="deleteTransaction('${tr.id}')" class="text-red-500 hover:text-red-700">🗑️</button>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-function exportData() {
-    if (userPlan === 'free') return alert(t('exportOnly'));
-    let csv = currentLang === 'ar'? 'المبلغ,التصنيف,الوصف,التاريخ\n' : 'Amount,Category,Description,Date\n';
-    transactions.forEach(tr => {
-        const date = tr.createdAt?.toDate().toLocaleDateString(currentLang === 'ar'? 'ar-EG' : 'en-US') || '';
-        csv += `${tr.amount},${tr.category},${tr.description || ''},${date}\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'masarefy-export.csv';
-    link.click();
-}
-
-function setupAdminClicks() {
-    document.getElementById('logo').addEventListener('click', () => {
-        logoClicks++;
-        if (logoClicks >= 5) {
-            logoClicks = 0;
-            document.getElementById('adminModal').classList.add('active');
-        }
-        setTimeout(() => { logoClicks = 0; }, 2000);
-    });
-}
-
-function checkAdmin() {
-    const pass = document.getElementById('adminPass').value;
-    if (pass === 'Masarefy@V6_Admin#2026') {
-        isAdmin = true;
-        closeAdmin();
-        showAdminPanel();
-    } else {
-        document.getElementById('adminError').textContent = t('wrongPass');
-        document.getElementById('adminError').classList.remove('hidden');
-    }
-}
-
-function showAdminPanel() {
-    const userId = prompt(`${t('adminActivated')}\n\n${t('userId')}`);
-    if (!userId) return;
-    activateUserPlan(userId);
-}
-
-async function activateUserPlan(shortId) {
-    const usersSnapshot = await db.collection('users').get();
-    let targetUser = null;
-    usersSnapshot.forEach(doc => {
-        if (doc.id.startsWith(shortId.toLowerCase())) {
-            targetUser = { id: doc.id,...doc.data() };
-        }
-    });
-
-    if (!targetUser) {
-        alert(t('userNotFound'));
-        return;
-    }
-
-    const planType = prompt(`${t('user')}: ${targetUser.displayName}\n${t('email')}: ${targetUser.email}\n\n${t('choosePlanNum')}`);
-
-    let planKey, days;
-    if (planType === '1') {
-        planKey = 'pro';
-        days = 30;
-    } else if (planType === '2') {
-        planKey = 'max';
-        days = 30;
-    } else if (planType === '3') {
-        planKey = 'max';
-        days = 365;
-    } else {
-        alert(t('wrongChoice'));
-        return;
-    }
-
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + days);
-
-    await db.collection('users').doc(targetUser.id).update({
-        plan: planKey, planExpiry: expiryDate, pendingPayment: false,
-        activatedBy: currentUser.uid, activatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    alert(`${t('activated')} ${planKey.toUpperCase()}\n${t('expires')} ${expiryDate.toLocaleDateString(currentLang === 'ar'? 'ar-EG' : 'en-US')}\n\n${t('sendLink')}\nhttps://abdullah2x4.github.io/expense-website/`);
-}
-
-function closeAdmin() {
-    document.getElementById('adminModal').classList.remove('active');
-    document.getElementById('adminPass').value = '';
-    document.getElementById('adminError').classList.add('hidden');
-}
-
-function logout() { auth.signOut(); }
-
-function toggleAI() {
-    if (userPlan!== 'max') return alert(t('aiOnly'));
-    document.getElementById('aiModal').classList.toggle('active');
-    if (document.getElementById('aiChat').children.length === 0) {
-        addAIMessage(t('aiWelcome'), 'ai');
-    }
-}
-
-function addAIMessage(text, sender) {
-    const chat = document.getElementById('aiChat');
+  list.forEach((expense) => {
     const div = document.createElement('div');
-    div.className = sender === 'user'? 'text-right' : 'text-left';
-    div.innerHTML = `<div class="inline-block px-4 py-2 rounded-lg ${sender === 'user'? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-800'}">${text}</div>`;
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-}
-
-async function sendAIMessage() {
-    if (userPlan!== 'max') return alert(t('aiOnly'));
-    const input = document.getElementById('aiInput');
-    const msg = input.value.trim();
-    if (!msg) return;
-    addAIMessage(msg, 'user');
-    input.value = '';
-
-    addAIMessage(`<span class="ai-typing">${t('thinking')}</span>`, 'ai');
-
-    setTimeout(() => {
-        const total = transactions.reduce((sum, tr) => sum + tr.amount, 0);
-        const categories = {};
-        transactions.forEach(tr => { categories[tr.category] = (categories[tr.category] || 0) + tr.amount; });
-        const topCategory = Object.keys(categories).reduce((a, b) => categories[a] > categories[b]? a : b, '');
-        const avg = total / transactions.length || 0;
-        const thisMonth = transactions.filter(tr => { const d = tr.createdAt?.toDate(); const now = new Date(); return d && d.getMonth() === now.getMonth(); });
-        const monthTotal = thisMonth.reduce((sum, tr) => sum + tr.amount, 0);
-
-        let response = '';
-        if (msg.includes('توقع') || msg.toLowerCase().includes('predict') || msg.includes('الشهر الجاي') || msg.toLowerCase().includes('next month')) {
-            const pred = monthTotal / new Date().getDate() * 30;
-            response = `${t('prediction')} ${formatAmount(pred)}\n${t('willSpend')} ${formatAmount(pred)} ${t('ifContinue')} ${topCategory} ${currentLang === 'ar'? 'بنسبة 15%' : 'by 15%'} ${t('save')} ${formatAmount(categories[topCategory] * 0.15)}`;
-        } else if (msg.includes('خطة') || msg.includes('توفير') || msg.toLowerCase().includes('plan') || msg.toLowerCase().includes('saving')) {
-response = `${t('savingPlan')} ${topCategory}: ${t('save')} ${formatAmount(categories[topCategory] * 0.2)}${t('savePerMonth')} ${formatAmount(monthTotal/30)}\n${t('checkAbove')} ${formatAmount(avg*2)}\n\n${t('ifCommit')} ${formatAmount(total*0.15)} ${t('monthly')} ${formatAmount(total*0.15*12)} ${t('yearly')}`;
-        } else if (msg.includes('تحليل') || msg.includes('ملخص') || msg.toLowerCase().includes('analysis') || msg.toLowerCase().includes('summary')) {
-            response = `${t('fullAnalysis')} ${formatAmount(total)}\n• ${t('thisMonth')}: ${formatAmount(monthTotal)}\n• ${t('topCategory')} ${topCategory} - ${formatAmount(categories[topCategory] || 0)}\n• ${t('avgTransaction')} ${formatAmount(avg)}\n• ${t('transactionCount')} ${transactions.length}\n\n${t('warning')} ${topCategory} ${t('takes')} ${((categories[topCategory]/total)*100).toFixed(1)}${t('ofExpenses')}`;
- 
-
-
-
-
-       } else {
-            response = `${t('vipResponse')} "${msg}"\n\n${t('basedOn')} ${transactions.length} ${t('transactions')} ${formatAmount(total)}\n${t('topItem')} ${topCategory} - ${formatAmount(categories[topCategory] || 0)}\n\n${t('whatElse')}`;
-        }
-
-        document.getElementById('aiChat').lastChild.remove();
-        addAIMessage(response, 'ai');
-    }, 1500);
-}
-
-function aiAnalyze() {
-    if (userPlan!== 'max') return alert(t('aiOnly'));
-    toggleAI();
-    setTimeout(() => {
-        document.getElementById('aiInput').value = t('fullAnalysisPlan');
-        sendAIMessage();
-    }, 500);
-// Search + Month Filter
-if(document.getElementById("searchInput")){
-  document.getElementById("searchInput").addEventListener("input", filterExp);
-  document.getElementById("monthFilter").addEventListener("change", filterExp);
-}
-function filterExp(){
-  let s = document.getElementById("searchInput").value.toLowerCase();
-  let m = document.getElementById("monthFilter").value;
-  let f = expenses.filter(e => (!s || e.name.toLowerCase().includes(s)) && (!m || e.date.startsWith(m)));
-  renderExpenses(f);
-}
-function renderExpenses(list = expenses){
-  let c = document.getElementById("expensesList");
-  c.innerHTML = list.length ? "" : "<p class="text-center text-gray-500 py-8">لا توجد مصاريف</p>";
-  list.forEach(e => {
-    c.innerHTML += `<div class="expense-item">${e.name} - ${e.amount} ج.م</div>`;
+    div.className = 'bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-3 flex justify-between items-center';
+    div.innerHTML = `
+      <div>
+        <p class="font-semibold">${expense.name}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">${expense.date}</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="font-bold text-lg">${expense.amount.toFixed(2)} ${currencies[settings.currency].symbol}</span>
+        <button onclick="window.deleteExpense('${expense.id}')" class="text-red-500 hover:text-red-700">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    `;
+    container.appendChild(div);
   });
 }
 
-// Search + Month Filter
-if(document.getElementById("searchInput")){
-  document.getElementById("searchInput").addEventListener("input", filterExp);
-  document.getElementById("monthFilter").addEventListener("change", filterExp);
+// 17. Delete
+window.deleteExpense = async (id) => {
+  if (confirm(t[settings.lang].deleteConfirm)) {
+    await deleteDoc(doc(db, 'users', currentUser.uid, 'expenses', id));
+  }
 }
-function filterExp(){
-  let s = document.getElementById("searchInput").value.toLowerCase();
-  let m = document.getElementById("monthFilter").value;
-  let f = expenses.filter(e => (!s || e.name.toLowerCase().includes(s)) && (!m || e.date.startsWith(m)));
-  renderExpenses(f);
-}
-function renderExpenses(list = expenses){
-  let c = document.getElementById("expensesList");
-  c.innerHTML = list.length ? "" : "<p class="text-center text-gray-500 py-8">لا توجد مصاريف</p>";
-  list.forEach(e => {
-    c.innerHTML += `<div class="expense-item">${e.name} - ${e.amount} ج.م</div>`;
+
+// 18. Chart
+function renderChart() {
+  const ctx = document.getElementById('expenseChart');
+  if (!ctx) return;
+  if (window.expenseChart) window.expenseChart.destroy();
+
+  const last7Days = [...Array(7)].map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    return d.toISOString().split('T')[0];
+  }).reverse();
+
+  const data = last7Days.map(date =>
+    expenses.filter(e => e.date === date).reduce((sum, e) => sum + e.amount, 0)
+  );
+
+  window.expenseChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: last7Days.map(d => d.split('-')[2] + '/' + d.split('-')[1]),
+      datasets: [{
+        label: t[settings.lang].chart,
+        data: data,
+        borderColor: 'rgb(59, 130, 246)',
+        tension: 0.3
+      }]
+    },
+    options: {
+      plugins: { legend: { labels: { color: settings.theme === 'dark'? '#fff' : '#000' } } },
+      scales: {
+        y: { ticks: { color: settings.theme === 'dark'? '#fff' : '#000' } },
+        x: { ticks: { color: settings.theme === 'dark'? '#fff' : '#000' } }
+      }
+    }
   });
 }
 
-}       
+// 19. Search + Filter
+function setupFilters() {
+  const searchInput = document.getElementById('searchInput');
+  const monthFilter = document.getElementById('monthFilter');
+  if (searchInput &&!searchInput.dataset.listener) {
+    searchInput.dataset.listener = 'true';
+    searchInput.addEventListener('input', applyFilters);
+  }
+  if (monthFilter &&!monthFilter.dataset.listener) {
+    monthFilter.dataset.listener = 'true';
+    monthFilter.addEventListener('change', applyFilters);
+  }
+}
+
+function applyFilters() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  const monthValue = document.getElementById('monthFilter').value;
+  let filtered = expenses;
+  if (searchTerm) filtered = filtered.filter(e => e.name.toLowerCase().includes(searchTerm));
+  if (monthValue) filtered = filtered.filter(e => e.date.startsWith(monthValue));
+  renderExpensesList(filtered);
+}
