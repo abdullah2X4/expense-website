@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<script>tailwind.config = { darkMode: "class" }</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مصاريفي V6 🤖</title>
@@ -35,6 +36,7 @@
                     <button id="settingsBtn" onclick="toggleSettings()" class="bg-white/20 px-3 py-1 rounded-lg text-sm">⚙️ إعدادات</button>
                     <button id="aiBtn" onclick="toggleAI()" class="hidden bg-white/20 px-3 py-1 rounded-lg text-sm">💬 AI VIP</button>
                     <img id="userPhoto" class="w-8 h-8 rounded-full">
+<button id="settingsBtn" class="text-2xl mr-3 hover:text-blue-500"><i class="fas fa-cog"></i></button>
                     <button id="logoutBtn" onclick="logout()" class="bg-white/20 px-3 py-1 rounded-lg text-sm">خروج</button>
                 </div>
             </div>
@@ -152,7 +154,7 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
     <script>initApp();</script>
 </body>
 </html>
