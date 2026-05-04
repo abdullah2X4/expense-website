@@ -3,60 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مصاريفي V6 - تسجيل الدخول</title>
+    <title>تسجيل الدخول - مصاريفي V6</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>body{font-family:'Cairo',sans-serif}</style>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+        body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white/95 backdrop-blur-lg p-8 rounded-3xl shadow-2xl w-full max-w-md">
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div class="text-center mb-8">
             <div class="text-6xl mb-4">💎</div>
-            <h1 class="text-4xl font-black text-gray-800 mb-2">مصاريفي V6</h1>
-            <p class="text-gray-500">إدارة أموالك بذكاء واحترافية</p>
+            <h1 class="text-3xl font-bold text-gray-800">مصاريفي V6</h1>
+            <p class="text-gray-500 mt-2">إدارة أموالك بذكاء واحترافية</p>
         </div>
-        
-        <button id="googleLogin" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 hover:border-violet-500 py-4 rounded-xl font-bold text-gray-700 transition-all hover:shadow-lg hover:-translate-y-0.5">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6">
+        <button onclick="signInWithGoogle()" class="w-full bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition">
+            <svg class="w-6 h-6" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
             المتابعة باستخدام جوجل
         </button>
-        
-        <div id="loader" class="hidden mt-4 text-center text-violet-600 font-semibold">جاري التحميل...</div>
-        <div id="error" class="hidden mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm"></div>
+        <div id="error" class="mt-4 text-red-500 text-center text-sm hidden"></div>
     </div>
-
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
+    <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyBS3FCovS0Ln0qGWSIOxoL3kiKe5njk1lk",
+            apiKey: "AIzaSyBS3FCovS0LmOGgWSIOxoL3kiKe5mjkl1k",
             authDomain: "masarefy-v6.firebaseapp.com",
             projectId: "masarefy-v6",
-            storageBucket: "masarefy-v6.firebasestorage.app",
+            storageBucket: "masarefy-v6.appspot.com",
             messagingSenderId: "362855388821",
-            appId: "1:362855388821:web:6bc34c416c520f60102d9c"
+            appId: "1:362855388821:web:6bc34c415c520f60102d9c"
         };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
-
-        onAuthStateChanged(auth, async (user) => {
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
-                const userRef = doc(db, 'users', user.uid);
-                const userSnap = await getDoc(userRef);
-                
-                if (!userSnap.exists()) {
-                    await setDoc(userRef, {
-                        name: user.displayName,
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (!userDoc.exists) {
+                    await db.collection('users').doc(user.uid).set({
                         email: user.email,
-                        plan: 'free',
-                        transactions_count: 0,
-                        created_at: new Date()
+                        displayName: user.displayName,
+                        photoURL: user.photoURL,
+                        plan: null,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    window.location.href = 'pricing.html';
+                } else if (!userDoc.data().plan) {
                     window.location.href = 'pricing.html';
                 } else {
                     window.location.href = 'index.html';
@@ -64,16 +59,15 @@
             }
         });
 
-        document.getElementById('googleLogin').onclick = async () => {
-            document.getElementById('loader').classList.remove('hidden');
+        async function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
             try {
-                await signInWithPopup(auth, provider);
-            } catch (e) {
-                document.getElementById('loader').classList.add('hidden');
+                await auth.signInWithPopup(provider);
+            } catch (error) {
+                document.getElementById('error').textContent = 'خطأ: ' + error.message;
                 document.getElementById('error').classList.remove('hidden');
-                document.getElementById('error').textContent = 'خطأ: ' + e.message;
             }
-        };
+        }
     </script>
 </body>
 </html>
