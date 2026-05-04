@@ -528,7 +528,7 @@ function setupAdminClicks() {
 
 function checkAdmin() {
     const pass = document.getElementById('adminPass').value;
-    if (pass === 'abdallah111$') {
+    if (pass === 'Masarefy@V6_Admin#2026') {
         isAdmin = true;
         closeAdmin();
         showAdminPanel();
