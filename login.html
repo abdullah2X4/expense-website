@@ -1,36 +1,63 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masarefy - تسجيل الدخول</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Wallet - تسجيل الدخول</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Cairo', sans-serif; }
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+    .gradient-text { background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .btn-active:active { transform: scale(0.95); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade-in { animation: fadeIn 0.5s ease; }
+  </style>
 </head>
-<body class="text-slate-100 p-4">
-    <div class="max-w-md mx-auto mt-20 animate-fade-up">
-        <div class="text-center mb-8">
-            <div class="text-6xl mb-4">💰</div>
-            <h1 class="text-4xl font-bold text-cyan-400">Masarefy</h1>
-            <p class="text-slate-400 mt-2">إدارة مصاريفك بذكاء</p>
-        </div>
-        <div class="glass p-6 rounded-3xl">
-            <h2 class="text-2xl font-bold mb-6 text-center">تسجيل الدخول</h2>
-            <input id="email" type="email" placeholder="الإيميل" class="w-full input-dark p-4 rounded-2xl mb-3">
-            <input id="password" type="password" placeholder="كلمة السر" class="w-full input-dark p-4 rounded-2xl mb-4">
-            <button onclick="signInEmail()" class="w-full bg-cyan-600 p-4 rounded-2xl font-bold mb-3 btn-active">دخول بالإيميل</button>
-            <button onclick="signUpEmail()" class="w-full bg-slate-700 p-4 rounded-2xl mb-4 btn-active">حساب جديد</button>
-            <div class="flex items-center gap-3 my-4">
-                <div class="flex-1 h-px bg-slate-700"></div>
-                <span class="text-slate-500 text-sm">أو</span>
-                <div class="flex-1 h-px bg-slate-700"></div>
-            </div>
-            <button onclick="signInGoogle()" class="w-full bg-white text-black p-4 rounded-2xl font-bold flex items-center justify-center gap-2 btn-active">
-                <span>🔍</span> دخول بجوجل
-            </button>
-        </div>
+<body class="text-white flex items-center justify-center p-6">
+  <div class="glass p-8 rounded-3xl w-full max-w-md animate-fade-in">
+    <div class="text-center mb-8">
+      <div class="text-6xl mb-4">💰</div>
+      <h1 class="text-3xl font-bold gradient-text mb-2">Smart Wallet</h1>
+      <p class="text-slate-400">إدارة أموالك بذكاء</p>
     </div>
-    <script type="module" src="app.js"></script>
+
+    <!-- تسجيل دخول بجوجل -->
+    <button id="googleLoginBtn" class="w-full bg-white text-slate-900 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 btn-active mb-6">
+      <span class="text-2xl">🔐</span> تسجيل الدخول بجوجل
+    </button>
+
+    <div class="flex items-center gap-4 mb-6">
+      <div class="flex-1 h-px bg-slate-700"></div>
+      <span class="text-slate-500 text-sm">أو</span>
+      <div class="flex-1 h-px bg-slate-700"></div>
+    </div>
+
+    <!-- تسجيل دخول بالإيميل -->
+    <div class="space-y-4">
+      <div>
+        <label class="text-sm text-slate-400">البريد الإلكتروني</label>
+        <input id="emailInput" type="email" class="w-full mt-2 bg-slate-800 p-3 rounded-xl" placeholder="example@gmail.com">
+      </div>
+      <div>
+        <label class="text-sm text-slate-400">كلمة المرور</label>
+        <input id="passwordInput" type="password" class="w-full mt-2 bg-slate-800 p-3 rounded-xl" placeholder="••••••••">
+      </div>
+      
+      <button id="emailLoginBtn" class="w-full bg-emerald-600 py-4 rounded-2xl font-bold btn-active">
+        تسجيل الدخول
+      </button>
+      
+      <button id="emailSignupBtn" class="w-full bg-slate-700 py-4 rounded-2xl font-bold btn-active">
+        إنشاء حساب جديد
+      </button>
+    </div>
+
+    <p class="text-xs text-slate-500 text-center mt-6">بالتسجيل، أنت توافق على الشروط والأحكام</p>
+  </div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
