@@ -2,8 +2,8 @@
 
 :root {
     --bg: #0f172a;
-    --card: rgba(30, 41, 59, 0.6);
-    --border: rgba(51, 65, 85, 0.4);
+    --card: rgba(30, 41, 59, 0.4);
+    --border: rgba(51, 65, 85, 0.3);
     --text: #f1f5f9;
     --text-muted: #94a3b8;
     --cyan: #06b6d4;
@@ -18,9 +18,11 @@ body {
     font-family: 'Cairo', sans-serif; 
     background: var(--bg);
     background-image: 
-        radial-gradient(at 20% 20%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
-        radial-gradient(at 80% 80%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+        radial-gradient(at 15% 15%, rgba(6, 182, 212, 0.2) 0px, transparent 50%),
+        radial-gradient(at 85% 85%, rgba(139, 92, 246, 0.2) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
     min-height: 100vh;
+    background-attachment: fixed;
 }
 
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -35,13 +37,15 @@ body {
 .btn-active:active { transform: scale(0.96); }
 .btn-active { transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1); }
 
-/* Glassmorphism أقوى */
+/* Glassmorphism قوي زي iOS 17 */
 .glass {
     background: var(--card);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
     border: 1px solid var(--border);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
 .vip-badge { 
@@ -54,7 +58,7 @@ body {
 .hidden { display: none !important; }
 
 .input-dark { 
-    background: rgba(51, 65, 85, 0.5); 
+    background: rgba(51, 65, 85, 0.4); 
     border: 1px solid var(--border); 
     color: var(--text);
     transition: all 0.2s;
@@ -62,8 +66,8 @@ body {
 .input-dark:focus { 
     border-color: var(--cyan); 
     outline: none; 
-    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-    background: rgba(51, 65, 85, 0.8);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    background: rgba(51, 65, 85, 0.6);
 }
 
 img.emoji {
@@ -79,9 +83,15 @@ img.emoji {
 }
 .bottom-sheet.show { transform: translateY(0); }
 
-/* Fix الإيميل */
+/* Fix الإيميل - ينزل سطر لوحده */
 #userName {
-    display: block;
-    margin-top: 2px;
+    display: block !important;
+    margin-top: 4px;
     font-size: 0.75rem;
+    line-height: 1;
+}
+
+/* تحسين الهيدر */
+#adminTrigger {
+    margin-bottom: 2px;
 }
