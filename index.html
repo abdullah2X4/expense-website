@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masarefy v1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white p-4">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-6 text-cyan-400">Masarefy 💰</h1>
+        
+        <div class="bg-gray-800 p-6 rounded-2xl mb-6 shadow-lg">
+            <p class="text-gray-400">رصيدك الحالي</p>
+            <p id="balance" class="text-4xl font-bold text-green-400">0.00 ج.م</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <button onclick="addTransaction('دخل')" class="bg-green-600 p-4 rounded-xl font-bold active:scale-95 transition">+ دخل</button>
+            <button onclick="addTransaction('مصروف')" class="bg-red-600 p-4 rounded-xl font-bold active:scale-95 transition">- مصروف</button>
+        </div>
+
+        <h2 class="text-xl font-bold mb-3">السجل</h2>
+        <div id="history" class="space-y-2"></div>
+    </div>
+
+<script>
+let balance = 0;
+let transactions = JSON.parse(localStorage.getItem('masarefy')) || [];
+
+function updateUI() {
+    balance = transactions.reduce((sum, t) => sum + (t.type === 'دخل' ? t.amount : -t.amount), 0);
+    document.getElementById('balance').innerText = balance.toFixed(2) + ' ج.م';
+    document.getElementById('history').innerHTML = transactions.map(t => `
+        <div class="bg-gray-800 p-3 rounded-lg flex justify-between">
+            <span>${t.type}</span>
+            <span class="${t.type === 'دخل' ? 'text-green-400' : 'text-red-400'}">${t.amount} ج.م</span>
+        </div>
+    `).reverse().join('');
+    localStorage.setItem('masarefy', JSON.stringify(transactions));
+}
+
+function addTransaction(type) {
+    let amount = parseFloat(prompt(`ادخل قيمة ${type}:`));
+    if (!amount || amount <= 0) return;
+    transactions.push({type, amount, date: new Date().toLocaleDateString('ar-EG')});
+    updateUI();
+}
+
+updateUI();
+</script>
+</body>
+</html>
