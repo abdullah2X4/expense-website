@@ -438,3 +438,99 @@ window.askAI = async () => {
 
 // تشغيل الإيموجي بعد تحميل الصفحة
 document.addEventListener('DOMContentLoaded', renderEmojis);
+let expenseChart = null;
+
+window.updateChart = (period = 'month') => {
+  const ctx = document.getElementById('expenseChart');
+  if (!ctx || !userData) return;
+  
+  const now = new Date();
+  let filtered = userData.transactions.filter(t => t.type === 'مصروف');
+  
+  if (period === 'week') {
+    const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    filtered = filtered.filter(t => new Date(t.timestamp) > weekAgo);
+  } else if (period === 'month') {
+    const monthAgo = new Date(now.getFullYear(), now.getMonth(), 1);
+    filtered = filtered.filter(t => new Date(t.timestamp) > monthAgo);
+  } else if (period === 'year') {
+    const yearAgo = new Date(now.getFullYear(), 0, 1);
+    filtered = filtered.filter(t => new Date(t.timestamp) > yearAgo);
+  }
+  
+  const categoryData = {};
+  filtered.forEach(t => {
+    categoryData[t.category] = (categoryData[t.category] || 0) + t.amount;
+  });
+  
+  const labels = Object.keys(categoryData);
+  const data = Object.values(categoryData);
+  const colors = ['#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+  
+  if (expenseChart) expenseChart.destroy();
+  
+  expenseChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: colors,
+        borderWidth: 0,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#f1f5f9', font: { family: 'Cairo', size: 11 }, padding: 10 }
+        }
+      }
+    }
+  });
+  
+  document.getElementById('statsCard').classList.remove('hidden');
+};
+
+window.exportPDF = async () => {
+  if (userData.plan === 'Free') {
+    alert('تصدير PDF متاح في خطة Pro و Max فقط ⭐️');
+    window.location.href = 'pricing.html';
+    return;
+  }
+  
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  doc.setFontSize(20);
+  doc.text('Masarefy - Financial Report', 105, 20, { align: 'center' });
+  
+  doc.setFontSize(12);
+  doc.text(`Name: ${userData.name}`, 20, 35);
+  doc.text(`Email: ${userData.email}`, 20, 42);
+  doc.text(`Date: ${new Date().toLocaleDateString('ar-EG')}`, 20, 49);
+  
+  let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل' ? t.amount : -t.amount), 0);
+  let totalExpense = userData.transactions.filter(t => t.type === 'مصروف').reduce((sum, t) => sum + t.amount, 0);
+  let totalIncome = userData.transactions.filter(t => t.type === 'دخل').reduce((sum, t) => sum + t.amount, 0);
+  
+  doc.text(`Balance: ${balance.toFixed(2)} EGP`, 20, 60);
+  doc.text(`Total Income: ${totalIncome.toFixed(2)} EGP`, 20, 67);
+  doc.text(`Total Expense: ${totalExpense.toFixed(2)} EGP`, 20, 74);
+  doc.text(`Budget: ${userData.budget.toFixed(2)} EGP`, 20, 81);
+  
+  doc.save(`Masarefy-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+  alert('تم تصدير التقرير بنجاح ✅');
+};
+
+// شغل الـ Chart تلقائي لما يبقى فيه معاملات
+const originalUpdateUI = window.updateUI;
+window.updateUI = async () => {
+  await originalUpdateUI();
+  if (userData.transactions.filter(t => t.type === 'مصروف').length > 0) {
+    setTimeout(() => updateChart('month'), 500);
+  }
+};
