@@ -1,0 +1,16 @@
+{
+  "name": "Masarefy",
+  "short_name": "Masarefy",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "إدارة مصاريفك بذكاء",
+  "icons": [
+    { 
+      "src": "https://em-content.zobj.net/source/apple/391/money-bag_1f4b0.png", 
+      "sizes": "512x512", 
+      "type": "image/png" 
+    }
+  ]
+}

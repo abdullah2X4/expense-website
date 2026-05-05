@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masarefy - تسجيل الدخول</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="text-slate-100 p-4">
+    <div class="max-w-md mx-auto mt-20 animate-fade-up">
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">💰</div>
+            <h1 class="text-4xl font-bold text-cyan-400">Masarefy</h1>
+            <p class="text-slate-400 mt-2">إدارة مصاريفك بذكاء</p>
+        </div>
+        <div class="glass p-6 rounded-3xl">
+            <h2 class="text-2xl font-bold mb-6 text-center">تسجيل الدخول</h2>
+            <input id="email" type="email" placeholder="الإيميل" class="w-full input-dark p-4 rounded-2xl mb-3">
+            <input id="password" type="password" placeholder="كلمة السر" class="w-full input-dark p-4 rounded-2xl mb-4">
+            <button onclick="signInEmail()" class="w-full bg-cyan-600 p-4 rounded-2xl font-bold mb-3 btn-active">دخول بالإيميل</button>
+            <button onclick="signUpEmail()" class="w-full bg-slate-700 p-4 rounded-2xl mb-4 btn-active">حساب جديد</button>
+            <div class="flex items-center gap-3 my-4">
+                <div class="flex-1 h-px bg-slate-700"></div>
+                <span class="text-slate-500 text-sm">أو</span>
+                <div class="flex-1 h-px bg-slate-700"></div>
+            </div>
+            <button onclick="signInGoogle()" class="w-full bg-white text-black p-4 rounded-2xl font-bold flex items-center justify-center gap-2 btn-active">
+                <span>🔍</span> دخول بجوجل
+            </button>
+        </div>
+    </div>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
