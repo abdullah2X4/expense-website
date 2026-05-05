@@ -14,15 +14,16 @@
 }
 
 * { -webkit-tap-highlight-color: transparent; }
-body { 
-    font-family: 'Cairo', sans-serif; 
+body {
+    font-family: 'Cairo', sans-serif;
     background: var(--bg);
-    background-image: 
+    background-image:
         radial-gradient(at 15% 15%, rgba(6, 182, 212, 0.2) 0px, transparent 50%),
         radial-gradient(at 85% 85%, rgba(139, 92, 246, 0.2) 0px, transparent 50%),
         radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
     min-height: 100vh;
     background-attachment: fixed;
+    color: var(--text);
 }
 
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -43,13 +44,13 @@ body {
     backdrop-filter: blur(32px) saturate(200%);
     -webkit-backdrop-filter: blur(32px) saturate(200%);
     border: 1px solid var(--border);
-    box-shadow: 
+    box-shadow:
         0 8px 32px 0 rgba(0, 0, 0, 0.5),
         inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
-.vip-badge { 
-    background: linear-gradient(135deg, #fbbf24, #f59e0b, #fbbf24); 
+.vip-badge {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b, #fbbf24);
     background-size: 200% 200%;
     animation: shimmer 3s infinite linear;
 }
@@ -57,15 +58,15 @@ body {
 .progress-bar { transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
 .hidden { display: none !important; }
 
-.input-dark { 
-    background: rgba(51, 65, 85, 0.4); 
-    border: 1px solid var(--border); 
+.input-dark {
+    background: rgba(51, 65, 85, 0.4);
+    border: 1px solid var(--border);
     color: var(--text);
     transition: all 0.2s;
 }
-.input-dark:focus { 
-    border-color: var(--cyan); 
-    outline: none; 
+.input-dark:focus {
+    border-color: var(--cyan);
+    outline: none;
     box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
     background: rgba(51, 65, 85, 0.6);
 }
@@ -89,12 +90,23 @@ img.emoji {
     margin-top: 4px;
     font-size: 0.75rem;
     line-height: 1;
+    color: var(--text-muted);
 }
 
 /* تحسين الهيدر */
 #adminTrigger {
     margin-bottom: 2px;
+    cursor: pointer;
 }
+
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, var(--emerald) 0%, var(--cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 /* Light Mode */
 body.light {
     --bg: #f1f5f9;
@@ -102,7 +114,7 @@ body.light {
     --border: rgba(203, 213, 225, 0.5);
     --text: #0f172a;
     --text-muted: #475569;
-    background-image: 
+    background-image:
         radial-gradient(at 20% 20%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
         radial-gradient(at 80% 80%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
 }
@@ -111,5 +123,14 @@ body.light .text-slate-300 { color: #334155 !important; }
 body.light .text-slate-400 { color: #475569 !important; }
 body.light .text-slate-500 { color: #64748b !important; }
 body.light .bg-slate-700 { background-color: #e2e8f0 !important; }
+body.light .bg-slate-800 { background-color: #cbd5e1 !important; }
 body.light .bg-slate-800\/30 { background-color: rgba(226, 232, 240, 0.5) !important; }
-body.light .input-dark { background: rgba(226, 232, 240, 0.6); color: #0f172a; }
+body.light .input-dark { 
+    background: rgba(226, 232, 240, 0.6); 
+    color: #0f172a;
+    border-color: rgba(203, 213, 225, 0.8);
+}
+body.light .input-dark:focus {
+    border-color: var(--cyan);
+    background: rgba(226, 232, 240, 0.8);
+}

@@ -48,7 +48,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgZXZlbnQgPT4geyBldmVudC53YWl0VW50aWwoc2VsZi5za2lwV2FpdGluZygpKTsgfSk7IHNlbGYuYWRkRXZlbnRMaXN0ZW5lcignZmV0Y2gnLCBldmVudCA9PiB7IGV2ZW50LnJlc3BvbmRXaXRoKGZldGNoKGV2ZW50LnJlcXVlc3QpKTsgfSk7');
 }
 
-// تحويل الإيموجي لآيفون ستايل
 function renderEmojis() {
   if (window.twemoji) {
     twemoji.parse(document.body, {
@@ -59,10 +58,55 @@ function renderEmojis() {
   }
 }
 
+// Auth Functions - موحدة
+window.signInWithEmail = async () => {
+  const email = document.getElementById('emailInput')?.value;
+  const password = document.getElementById('passwordInput')?.value;
+  if (!email ||!password) return alert('اكتب الإيميل والباسورد');
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    if (error.code === 'auth/user-not-found') alert('الإيميل ده مش مسجل');
+    else if (error.code === 'auth/wrong-password') alert('كلمة المرور غلط');
+    else if (error.code === 'auth/invalid-email') alert('الإيميل غير صحيح');
+    else alert('خطأ: ' + error.message);
+  }
+};
+
+window.signUpWithEmail = async () => {
+  const email = document.getElementById('emailInput')?.value;
+  const password = document.getElementById('passwordInput')?.value;
+  if (!email ||!password) return alert('اكتب الإيميل والباسورد');
+  if (password.length < 6) return alert('الباسورد لازم 6 حروف على الأقل');
+
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    if (error.code === 'auth/email-already-in-use') alert('الإيميل ده مستخدم بالفعل');
+    else if (error.code === 'auth/invalid-email') alert('الإيميل غير صحيح');
+    else alert('خطأ: ' + error.message);
+  }
+};
+
+window.signInWithGoogle = async () => {
+  try {
+    await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    alert('خطأ في تسجيل دخول جوجل: ' + error.message);
+  }
+};
+
+window.signOut = async () => {
+  if (confirm('متأكد عايز تسجل خروج؟')) {
+    await firebaseSignOut(auth);
+  }
+};
+
 // مراقبة حالة تسجيل الدخول
 onAuthStateChanged(auth, async (user) => {
   const isLoginPage = window.location.pathname.includes('login.html');
-  
+
   if (user) {
     currentUser = user;
     await loadUserData();
@@ -74,7 +118,7 @@ onAuthStateChanged(auth, async (user) => {
       updateUI();
     }
   } else {
-    if (!isLoginPage && !window.location.pathname.includes('pricing.html')) {
+    if (!isLoginPage &&!window.location.pathname.includes('pricing.html')) {
       window.location.href = 'login.html';
     }
   }
@@ -102,8 +146,8 @@ async function loadUserData() {
     await setDoc(doc(db, 'users', currentUser.uid), userData);
   }
   if (!userData.categories) userData.categories = defaultCategories;
- await loadTransactions();
- updateUI();
+  await loadTransactions();
+  updateUI();
 }
 
 async function loadTransactions() {
@@ -111,47 +155,9 @@ async function loadTransactions() {
   const querySnapshot = await getDocs(q);
   userData.transactions = [];
   querySnapshot.forEach((doc) => {
-    userData.transactions.push({ id: doc.id, ...doc.data() });
+    userData.transactions.push({ id: doc.id,...doc.data() });
   });
 }
-
-// Auth Functions
-window.signInEmail = async () => {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  if (!email || !password) return alert('ادخل الإيميل وكلمة السر');
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    alert('خطأ: ' + error.message);
-  }
-};
-
-window.signUpEmail = async () => {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  if (!email || !password) return alert('ادخل الإيميل وكلمة السر');
-  if (password.length < 6) return alert('كلمة السر لازم 6 حروف على الأقل');
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    alert('خطأ: ' + error.message);
-  }
-};
-
-window.signInGoogle = async () => {
-  try {
-    await signInWithPopup(auth, googleProvider);
-  } catch (error) {
-    alert('خطأ: ' + error.message);
-  }
-};
-
-window.signOut = async () => {
-  if (confirm('متأكد عايز تسجل خروج؟')) {
-    await firebaseSignOut(auth);
-  }
-};
 
 // باسورد الأدمن
 let clickCount = 0;
@@ -174,12 +180,12 @@ function showAdminPanel() {
   if (!email) return;
   const plan = prompt('الخطة (Pro/Max):', 'Pro');
   const duration = prompt('المدة (month/year):', 'month');
-  if (!plan || !duration) return;
-  
+  if (!plan ||!duration) return;
+
   const expiry = new Date();
   if (duration === 'month') expiry.setMonth(expiry.getMonth() + 1);
   else expiry.setFullYear(expiry.getFullYear() + 1);
-  
+
   activateVipForEmail(email, plan, expiry.toISOString());
 }
 
@@ -187,7 +193,7 @@ async function activateVipForEmail(email, plan, expiry) {
   const q = query(collection(db, 'users'), where('email', '==', email));
   const querySnapshot = await getDocs(q);
   if (querySnapshot.empty) return alert('الإيميل مش موجود');
-  
+
   querySnapshot.forEach(async (docSnap) => {
     await updateDoc(doc(db, 'users', docSnap.id), {
       plan: plan,
@@ -199,23 +205,23 @@ async function activateVipForEmail(email, plan, expiry) {
 
 window.updateUI = async () => {
   if (!userData) return;
-  
+
   applyLanguage(userData.language || 'ar');
   applyTheme(userData.theme || 'dark');
-  
+
   const t = translations[userData.language] || translations.ar;
-  
-  let balance = userData.transactions.reduce((sum, tr) => sum + (tr.type === 'دخل' ? tr.amount : -tr.amount), 0);
+
+  let balance = userData.transactions.reduce((sum, tr) => sum + (tr.type === 'دخل'? tr.amount : -tr.amount), 0);
   document.getElementById('balance').innerText = formatCurrency(balance);
-  
+
   let totalExpense = userData.transactions.filter(tr => tr.type === 'مصروف').reduce((sum, tr) => sum + tr.amount, 0);
-  let budgetPercent = userData.budget > 0 ? (totalExpense / userData.budget * 100) : 0;
+  let budgetPercent = userData.budget > 0? (totalExpense / userData.budget * 100) : 0;
   document.getElementById('budgetBar').style.width = Math.min(budgetPercent, 100) + '%';
-  document.getElementById('budgetBar').className = `progress-bar h-2.5 rounded-full ${budgetPercent > 90 ? 'bg-red-500' : budgetPercent > 70 ? 'bg-amber-500' : 'bg-emerald-500'}`;
-  
+  document.getElementById('budgetBar').className = `progress-bar h-2.5 rounded-full ${budgetPercent > 90? 'bg-red-500' : budgetPercent > 70? 'bg-amber-500' : 'bg-emerald-500'}`;
+
   document.getElementById('spentText').innerText = `${t.spent}: ${formatCurrency(totalExpense)}`;
   document.getElementById('budgetText').innerText = `${t.budget}: ${formatCurrency(userData.budget)}`;
-  
+
   document.getElementById('history').innerHTML = userData.transactions.map((tr) => `
     <div class="glass p-4 rounded-2xl flex justify-between items-center animate-slide-right">
       <div class="flex items-center gap-3">
@@ -226,7 +232,7 @@ window.updateUI = async () => {
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <span class="${tr.type === 'دخل' ? 'text-emerald-400' : 'text-rose-400'} font-bold text-lg">${formatCurrency(tr.amount)}</span>
+        <span class="${tr.type === 'دخل'? 'text-emerald-400' : 'text-rose-400'} font-bold text-lg">${formatCurrency(tr.amount)}</span>
         <button onclick="deleteTransaction('${tr.id}')" class="bg-red-600 px-3 py-2 rounded-xl text-xs btn-active">🗑️</button>
       </div>
     </div>
@@ -234,7 +240,7 @@ window.updateUI = async () => {
 
   const vipBtn = document.getElementById('vipBtn');
   const vipBadge = document.getElementById('vipBadge');
-  if (userData.plan !== 'Free' && new Date(userData.expiry) > new Date()) {
+  if (userData.plan!== 'Free' && new Date(userData.expiry) > new Date()) {
     vipBtn.innerText = `⭐️ ${userData.plan}`;
     vipBtn.classList.add('vip-badge', 'text-black');
     vipBadge.classList.remove('hidden');
@@ -252,14 +258,14 @@ window.updateUI = async () => {
   } else {
     document.getElementById('limitText').innerText = '';
   }
-  
+
   setTimeout(renderEmojis, 100);
 
   if (userData.transactions.filter(tr => tr.type === 'مصروف').length > 0) {
     setTimeout(() => updateChart('month'), 500);
   }
 
-  // ربط كل الزراير
+  // ربط كل الزراير - مهم جداً
   document.getElementById('settingsBtn')?.addEventListener('click', showSettings);
   document.getElementById('vipBtn')?.addEventListener('click', () => window.location.href='pricing.html');
   document.getElementById('addBtn')?.addEventListener('click', () => showAddModal('دخل'));
@@ -271,6 +277,8 @@ window.updateUI = async () => {
   document.getElementById('chartMonthBtn')?.addEventListener('click', () => updateChart('month'));
   document.getElementById('chartYearBtn')?.addEventListener('click', () => updateChart('year'));
   document.getElementById('googleLoginBtn')?.addEventListener('click', signInWithGoogle);
+  document.getElementById('emailLoginBtn')?.addEventListener('click', signInWithEmail);
+  document.getElementById('emailSignupBtn')?.addEventListener('click', signUpWithEmail);
   document.getElementById('cancelAddBtn')?.addEventListener('click', closeAddModal);
   document.getElementById('saveTransBtn')?.addEventListener('click', saveTransaction);
   document.getElementById('cancelSettingsBtn')?.addEventListener('click', closeSettings);
@@ -283,13 +291,13 @@ window.showAddModal = (type) => {
   document.getElementById('modalTitle').innerText = `إضافة ${type}`;
   document.getElementById('txName').value = '';
   document.getElementById('txAmount').value = '';
-  
+
   const select = document.getElementById('txCategory');
   select.innerHTML = '<option value="">اختر الفئة</option>';
   userData.categories.forEach(cat => {
     select.innerHTML += `<option value="${cat.name}">${cat.icon} ${cat.name}</option>`;
   });
-  
+
   document.getElementById('addModal').classList.remove('hidden');
   setTimeout(() => document.getElementById('addModalSheet').classList.add('show'), 10);
 };
@@ -309,16 +317,16 @@ window.saveTransaction = async () => {
       return;
     }
   }
-  
+
   const name = document.getElementById('txName').value;
   const amount = parseFloat(document.getElementById('txAmount').value);
   const category = document.getElementById('txCategory').value;
-  
-  if (!name || !amount || amount <= 0) return alert('ادخل الاسم والمبلغ');
-  if (currentTxType === 'مصروف' && !category) return alert('اختر الفئة');
-  
+
+  if (!name ||!amount || amount <= 0) return alert('ادخل الاسم والمبلغ');
+  if (currentTxType === 'مصروف' &&!category) return alert('اختر الفئة');
+
   const icon = userData.categories.find(c => c.name === category)?.icon || '💰';
-  
+
   const newTx = {
     userId: currentUser.uid,
     type: currentTxType,
@@ -329,9 +337,9 @@ window.saveTransaction = async () => {
     date: new Date().toLocaleDateString('ar-EG'),
     timestamp: new Date().toISOString()
   };
-  
+
   const docRef = await addDoc(collection(db, 'transactions'), newTx);
-  userData.transactions.push({ id: docRef.id, ...newTx });
+  userData.transactions.push({ id: docRef.id,...newTx });
   closeAddModal();
   updateUI();
 };
@@ -349,15 +357,15 @@ window.closeCategoryModal = () => {
 window.saveCategory = async () => {
   const name = document.getElementById('newCategoryName').value;
   const icon = document.getElementById('newCategoryIcon').value;
-  if (!name || !icon) return alert('ادخل الاسم والأيقونة');
-  
+  if (!name ||!icon) return alert('ادخل الاسم والأيقونة');
+
   userData.categories.push({ name, icon });
   await updateDoc(doc(db, 'users', currentUser.uid), { categories: userData.categories });
-  
+
   const select = document.getElementById('txCategory');
   select.innerHTML += `<option value="${name}">${icon} ${name}</option>`;
   select.value = name;
-  
+
   closeCategoryModal();
   renderEmojis();
 };
@@ -365,7 +373,7 @@ window.saveCategory = async () => {
 window.deleteTransaction = async (id) => {
   if (confirm('متأكد عايز تمسح المعاملة دي؟')) {
     await deleteDoc(doc(db, 'transactions', id));
-    userData.transactions = userData.transactions.filter(t => t.id !== id);
+    userData.transactions = userData.transactions.filter(t => t.id!== id);
     updateUI();
   }
 };
@@ -427,7 +435,7 @@ window.saveSettings = async () => {
 };
 
 window.subscribe = (plan, duration, price) => {
-  document.getElementById('planDetails').innerText = `${plan} - ${duration === 'month' ? 'شهر' : 'سنة'} - ${price} ج.م`;
+  document.getElementById('planDetails').innerText = `${plan} - ${duration === 'month'? 'شهر' : 'سنة'} - ${price} ج.م`;
   let msg = `مرحبا، حولت ${price}ج لاشتراك Masarefy ${plan} ${duration}. إيميلي: ${currentUser.email}`;
   document.getElementById('whatsappLink').href = `https://wa.me/201121898023?text=${encodeURIComponent(msg)}`;
   document.getElementById('paymentModal').classList.remove('hidden');
@@ -437,7 +445,7 @@ window.closePayment = () => document.getElementById('paymentModal').classList.ad
 
 window.askAI = async () => {
   const today = new Date().toDateString();
-  if (userData.lastQuestionDate !== today) {
+  if (userData.lastQuestionDate!== today) {
     userData.aiQuestionsToday = 0;
     userData.lastQuestionDate = today;
     await updateDoc(doc(db, 'users', currentUser.uid), {
@@ -446,7 +454,7 @@ window.askAI = async () => {
     });
   }
 
-  let limit = userData.plan === 'Free' ? 3 : userData.plan === 'Pro' ? 5 : 999;
+  let limit = userData.plan === 'Free'? 3 : userData.plan === 'Pro'? 5 : 999;
   if (userData.aiQuestionsToday >= limit) {
     alert(`خلصت أسئلتك اليوم (${limit}). رقي حسابك للمزيد`);
     window.location.href = 'pricing.html';
@@ -455,24 +463,24 @@ window.askAI = async () => {
 
   let question = prompt('اسأل المساعد الذكي عن مصاريفك:');
   if (!question) return;
-  
+
   userData.aiQuestionsToday++;
   await updateDoc(doc(db, 'users', currentUser.uid), {
     aiQuestionsToday: userData.aiQuestionsToday
   });
-  
-  let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل' ? t.amount : -t.amount), 0);
+
+  let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل'? t.amount : -t.amount), 0);
   let expenses = userData.transactions.filter(t => t.type === 'مصروف');
   let totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
-  let avgExpense = expenses.length ? (totalExpense / expenses.length) : 0;
-  
+  let avgExpense = expenses.length? (totalExpense / expenses.length) : 0;
+
   let answer = `سؤالك: ${question}\n\n`;
   answer += `📊 تحليل سريع:\n`;
   answer += `رصيدك: ${balance.toFixed(2)} ج.م\n`;
   answer += `إجمالي المصروف: ${totalExpense.toFixed(2)} ج.م\n`;
   answer += `متوسط المصروف: ${avgExpense.toFixed(2)} ج.م\n`;
   answer += `الميزانية: ${userData.budget.toFixed(2)} ج.م | المتبقي: ${(userData.budget - totalExpense).toFixed(2)} ج.م\n\n`;
-  
+
   if (userData.budget > 0 && totalExpense > userData.budget * 0.9) {
     answer += `⚠️ تحذير: قربت تخلص ميزانيتك!\n`;
   } else if (balance < 0) {
@@ -480,26 +488,25 @@ window.askAI = async () => {
   } else {
     answer += `✅ وضعك تمام! كمل كده\n`;
   }
-  
-  if (userData.plan !== 'Max') {
+
+  if (userData.plan!== 'Max') {
     answer += `\n⭐️ رقي لـ Max عشان تحليل أعمق + AI حقيقي`;
   }
-  
+
   alert(answer);
   updateUI();
 };
 
-// تشغيل الإيموجي بعد تحميل الصفحة
 document.addEventListener('DOMContentLoaded', renderEmojis);
 let expenseChart = null;
 
 window.updateChart = (period = 'month') => {
   const ctx = document.getElementById('expenseChart');
-  if (!ctx || !userData) return;
-  
+  if (!ctx ||!userData) return;
+
   const now = new Date();
   let filtered = userData.transactions.filter(t => t.type === 'مصروف');
-  
+
   if (period === 'week') {
     const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
     filtered = filtered.filter(t => new Date(t.timestamp) > weekAgo);
@@ -510,18 +517,18 @@ window.updateChart = (period = 'month') => {
     const yearAgo = new Date(now.getFullYear(), 0, 1);
     filtered = filtered.filter(t => new Date(t.timestamp) > yearAgo);
   }
-  
+
   const categoryData = {};
   filtered.forEach(t => {
     categoryData[t.category] = (categoryData[t.category] || 0) + t.amount;
   });
-  
+
   const labels = Object.keys(categoryData);
   const data = Object.values(categoryData);
   const colors = ['#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
-  
+
   if (expenseChart) expenseChart.destroy();
-  
+
   expenseChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
@@ -544,7 +551,7 @@ window.updateChart = (period = 'month') => {
       }
     }
   });
-  
+
   document.getElementById('statsCard').classList.remove('hidden');
 };
 
@@ -554,75 +561,29 @@ window.exportPDF = async () => {
     window.location.href = 'pricing.html';
     return;
   }
-  
+
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  
+
   doc.setFontSize(20);
   doc.text('Masarefy - Financial Report', 105, 20, { align: 'center' });
-  
+
   doc.setFontSize(12);
   doc.text(`Name: ${userData.name}`, 20, 35);
   doc.text(`Email: ${userData.email}`, 20, 42);
   doc.text(`Date: ${new Date().toLocaleDateString('ar-EG')}`, 20, 49);
-  
-  let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل' ? t.amount : -t.amount), 0);
+
+  let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل'? t.amount : -t.amount), 0);
   let totalExpense = userData.transactions.filter(t => t.type === 'مصروف').reduce((sum, t) => sum + t.amount, 0);
   let totalIncome = userData.transactions.filter(t => t.type === 'دخل').reduce((sum, t) => sum + t.amount, 0);
-  
+
   doc.text(`Balance: ${balance.toFixed(2)} EGP`, 20, 60);
   doc.text(`Total Income: ${totalIncome.toFixed(2)} EGP`, 20, 67);
   doc.text(`Total Expense: ${totalExpense.toFixed(2)} EGP`, 20, 74);
   doc.text(`Budget: ${userData.budget.toFixed(2)} EGP`, 20, 81);
-  
+
   doc.save(`Masarefy-Report-${new Date().toISOString().split('T')[0]}.pdf`);
   alert('تم تصدير التقرير بنجاح ✅');
-};
-
-// شغل الـ Chart تلقائي لما يبقى فيه معاملات
-const originalUpdateUI = window.updateUI;
-window.updateUI = async () => {
-  await originalUpdateUI();
-  if (userData.transactions.filter(t => t.type === 'مصروف').length > 0) {
-    setTimeout(() => updateChart('month'), 500);
-  }
-};
-// v7: Settings Functions
-window.showSettings = () => {
-  document.getElementById('settingsName').value = userData.name;
-  document.getElementById('settingsBudget').value = userData.budget;
-  document.getElementById('settingsLang').value = userData.language || 'ar';
-  document.getElementById('settingsCurrency').value = userData.currency || 'EGP';
-  document.getElementById('settingsTheme').value = userData.theme || 'dark';
-  document.getElementById('settingsModal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('settingsModalSheet').classList.add('show'), 10);
-};
-
-window.closeSettings = () => {
-  document.getElementById('settingsModalSheet').classList.remove('show');
-  setTimeout(() => document.getElementById('settingsModal').classList.add('hidden'), 400);
-};
-
-window.saveSettings = async () => {
-  userData.name = document.getElementById('settingsName').value;
-  userData.budget = parseFloat(document.getElementById('settingsBudget').value) || 0;
-  userData.language = document.getElementById('settingsLang').value;
-  userData.currency = document.getElementById('settingsCurrency').value;
-  userData.theme = document.getElementById('settingsTheme').value;
-  
-  await updateDoc(doc(db, 'users', currentUser.uid), { 
-    name: userData.name, 
-    budget: userData.budget,
-    language: userData.language,
-    currency: userData.currency,
-    theme: userData.theme
-  });
-  
-  applyLanguage(userData.language);
-  applyTheme(userData.theme);
-  document.getElementById('userName').innerText = userData.name;
-  closeSettings();
-  updateUI();
 };
 
 function applyLanguage(lang) {
@@ -632,7 +593,7 @@ function applyLanguage(lang) {
     if (t[key]) el.innerText = t[key];
   });
   document.documentElement.lang = lang;
-  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.dir = lang === 'ar'? 'rtl' : 'ltr';
 }
 
 function applyTheme(theme) {
@@ -647,9 +608,3 @@ function formatCurrency(amount) {
   const symbol = currencySymbols[userData.currency] || 'ج.م';
   return `${amount.toFixed(2)} ${symbol}`;
 }
-
-// عدّل userData الافتراضي
-// ابحث عن userData = { و ضيف السطور دي جواه:
-  language: 'ar',
-  currency: 'EGP',
-  theme: 'dark',

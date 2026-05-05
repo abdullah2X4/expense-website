@@ -12,12 +12,14 @@
     .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
     .gradient-text { background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .btn-active:active { transform: scale(0.95); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade-in { animation: fadeIn 0.5s ease; }
   </style>
 </head>
 <body class="text-white p-6">
-  <div class="max-w-md mx-auto">
+  <div class="max-w-md mx-auto animate-fade-in">
     <button id="backBtn" class="mb-6 bg-slate-800 p-3 rounded-full btn-active">←</button>
-    
+
     <div class="glass p-8 rounded-3xl text-center mb-6">
       <div class="text-6xl mb-4">⭐</div>
       <h1 class="text-3xl font-bold gradient-text mb-2">Smart Wallet Pro</h1>
@@ -32,23 +34,55 @@
         <li>✅ مساعد ذكي غير محدود</li>
         <li>✅ إحصائيات متقدمة</li>
         <li>✅ نسخ احتياطي تلقائي</li>
+        <li>✅ دعم فني 24/7</li>
       </ul>
     </div>
 
+    <div class="glass p-6 rounded-3xl mb-6">
+      <div class="text-center mb-4">
+        <p class="text-slate-400 text-sm">اشتراك شهري</p>
+        <p class="text-4xl font-bold gradient-text">99 ج.م</p>
+        <p class="text-slate-500 text-xs mt-1">أو 999 ج.م / سنوياً - وفر 189 ج.م</p>
+      </div>
+    </div>
+
     <button id="upgradeBtn" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 py-4 rounded-2xl font-bold text-lg btn-active">
-      ترقية الآن - 99 ج.م / شهرياً
+      ترقية الآن
     </button>
-    
+
     <p class="text-xs text-slate-500 text-center mt-4">يمكنك الإلغاء في أي وقت</p>
   </div>
 
   <script type="module">
-    import { loadUserData } from './app.js';
-    
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBS3FCovS0LmOGgWSIOxoL3kiKe5mjkl1k",
+      authDomain: "masarefy-v6.firebaseapp.com",
+      projectId: "masarefy-v6",
+      storageBucket: "masarefy-v6.firebasestorage.app",
+      messagingSenderId: "362855388821",
+      appId: "1:362855388821:web:6bc34c415c520f60102d9c",
+      measurementId: "G-LNXCG5P1BJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // تحقق من تسجيل الدخول
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+      }
+    });
+
     document.getElementById('backBtn')?.addEventListener('click', () => window.location.href='index.html');
+    
     document.getElementById('upgradeBtn')?.addEventListener('click', async () => {
-      alert('هيتم التوجيه لبوابة الدفع قريباً 🚀');
-      // هنا تحط كود Stripe أو بوابة الدفع
+      alert('هيتم التوجيه لبوابة الدفع قريباً 🚀\n\nتواصل معنا على واتساب: 201121898023 لتفعيل اشتراكك يدوياً');
+      // هنا تحط كود Stripe أو بوابة الدفع لما تجهز
+      // window.location.href = 'https://your-payment-link.com';
     });
   </script>
 </body>
