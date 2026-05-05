@@ -1,3 +1,4 @@
+window.onerror = function(msg, url, line) { alert('Error: ' + msg + '\nLine: ' + line); };
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
@@ -257,7 +258,11 @@ window.updateUI = async () => {
   if (userData.transactions.filter(tr => tr.type === 'مصروف').length > 0) {
     setTimeout(() => updateChart('month'), 500);
   }
-};
+
+
+    document.getElementById('settingsBtn')?.addEventListener('click', showSettings);
+  document.getElementById('addBtn')?.addEventListener('click', showAddModal);
+ };
 
 // Modals
 window.showAddModal = (type) => {
@@ -372,8 +377,11 @@ window.setBudget = async () => {
 };
 
 window.showSettings = () => {
-  document.getElementById('settingsName').value = userData.name;
-  document.getElementById('settingsBudget').value = userData.budget;
+  document.getElementById('settingsName').value = userData.name || '';
+  document.getElementById('settingsBudget').value = userData.budget || 0;
+  document.getElementById('settingsLang').value = userData.language || 'ar';
+  document.getElementById('settingsCurrency').value = userData.currency || 'EGP';
+  document.getElementById('settingsTheme').value = userData.theme || 'dark';
   document.getElementById('settingsModal').classList.remove('hidden');
   setTimeout(() => document.getElementById('settingsModalSheet').classList.add('show'), 10);
 };
@@ -386,10 +394,20 @@ window.closeSettings = () => {
 window.saveSettings = async () => {
   userData.name = document.getElementById('settingsName').value;
   userData.budget = parseFloat(document.getElementById('settingsBudget').value) || 0;
-  await updateDoc(doc(db, 'users', currentUser.uid), { 
-    name: userData.name, 
-    budget: userData.budget 
+  userData.language = document.getElementById('settingsLang').value;
+  userData.currency = document.getElementById('settingsCurrency').value;
+  userData.theme = document.getElementById('settingsTheme').value;
+
+  await updateDoc(doc(db, 'users', currentUser.uid), {
+    name: userData.name,
+    budget: userData.budget,
+    language: userData.language,
+    currency: userData.currency,
+    theme: userData.theme
   });
+
+  applyLanguage(userData.language);
+  applyTheme(userData.theme);
   document.getElementById('userName').innerText = userData.name;
   closeSettings();
   updateUI();
