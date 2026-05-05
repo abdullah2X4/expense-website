@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masarefy v2 - VIP</title>
+    <title>Masarefy v2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
@@ -15,32 +15,26 @@
 <body class="bg-gray-900 text-white p-4">
     <div class="max-w-md mx-auto">
         
-        <!-- 1. الهيدر + الزرار السري + زرار VIP -->
         <div class="flex justify-between items-center mb-6">
             <h1 id="adminTrigger" class="text-3xl font-bold text-cyan-400 select-none">Masarefy 💰</h1>
             <button id="vipBtn" onclick="showPricing()" class="px-4 py-2 rounded-lg font-bold bg-gray-700 transition">⭐ رقي حسابك</button>
         </div>
 
-        <!-- 2. شارة VIP -->
         <div id="vipBadge" class="hidden vip-badge text-black p-2 rounded-lg text-center mb-4 font-bold"></div>
         
-        <!-- 3. الرصيد -->
         <div class="bg-gray-800 p-6 rounded-2xl mb-6 shadow-lg">
             <p class="text-gray-400">رصيدك الحالي</p>
             <p id="balance" class="text-4xl font-bold text-green-400">0.00 ج.م</p>
             <p id="limitText" class="text-xs text-gray-500 mt-2"></p>
         </div>
 
-        <!-- 4. أزرار الدخل والمصروف -->
         <div class="grid grid-cols-2 gap-4 mb-6">
             <button onclick="addTransaction('دخل')" class="bg-green-600 p-4 rounded-xl font-bold active:scale-95 transition">+ دخل</button>
             <button onclick="addTransaction('مصروف')" class="bg-red-600 p-4 rounded-xl font-bold active:scale-95 transition">- مصروف</button>
         </div>
 
-        <!-- 5. زرار المساعد الذكي -->
         <button onclick="askAI()" class="w-full bg-purple-600 p-3 rounded-xl font-bold mb-6 active:scale-95 transition">اسأل المساعد الذكي 🤖</button>
 
-        <!-- 6. السجل مع زرار المسح -->
         <div class="flex justify-between items-center mb-3">
             <h2 class="text-xl font-bold">السجل</h2>
             <button onclick="clearAll()" class="text-xs bg-red-800 px-3 py-1 rounded-lg">مسح الكل 🗑️</button>
@@ -48,19 +42,16 @@
         <div id="history" class="space-y-2"></div>
     </div>
 
-    <!-- 7. صفحة الأسعار Modal -->
     <div id="pricingModal" class="hidden fixed inset-0 bg-black bg-opacity-80 p-4 overflow-y-auto z-50">
         <div class="bg-gray-800 max-w-md mx-auto rounded-2xl p-6">
             <h2 class="text-2xl font-bold mb-4 text-center">اختر خطتك ⭐</h2>
             
-            <!-- Free -->
             <div class="border border-gray-600 p-4 rounded-xl mb-3">
                 <h3 class="font-bold">مجاني</h3>
                 <p class="text-sm text-gray-400">3 أسئلة AI + 100 مصروف/شهر</p>
                 <button id="freePlanBtn" class="mt-2 w-full bg-gray-600 p-2 rounded-lg" disabled>خطتك الحالية</button>
             </div>
 
-            <!-- Pro -->
             <div class="border-2 border-cyan-400 p-4 rounded-xl mb-3">
                 <h3 class="font-bold text-cyan-400">Pro - 25 ج.م/شهر</h3>
                 <p class="text-sm text-gray-400">5 أسئلة AI/يوم + مصاريف غير محدودة + PDF</p>
@@ -68,7 +59,6 @@
                 <button onclick="subscribe('Pro','year',250)" class="mt-2 w-full bg-cyan-800 p-2 rounded-lg text-sm">سنوي 250ج وفر 50ج</button>
             </div>
 
-            <!-- Max -->
             <div class="border-2 border-yellow-400 p-4 rounded-xl mb-3">
                 <h3 class="font-bold text-yellow-400">Max - 50 ج.م/شهر</h3>
                 <p class="text-sm text-gray-400">أسئلة AI غير محدودة + كل الميزات + تحليل ذكي فشخ</p>
@@ -80,7 +70,6 @@
         </div>
     </div>
 
-    <!-- 8. صفحة الدفع Modal -->
     <div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-80 p-4 z-50">
         <div class="bg-gray-800 max-w-md mx-auto rounded-2xl p-6 text-center">
             <h2 class="text-2xl font-bold mb-4">إتمام الاشتراك</h2>
@@ -96,7 +85,6 @@
         </div>
     </div>
 
-    <!-- 9. لوحة الأدمن السرية Modal -->
     <div id="adminModal" class="hidden fixed inset-0 bg-black bg-opacity-90 p-4 z-50">
         <div class="bg-gray-800 max-w-md mx-auto rounded-2xl p-6">
             <h2 class="text-2xl font-bold mb-4 text-red-400">لوحة الأدمن 🔐</h2>
@@ -115,7 +103,6 @@
     </div>
 
 <script>
-// ==================== 1. بيانات المستخدم ====================
 let userData = JSON.parse(localStorage.getItem('masarefy_user')) || {
     plan: 'Free',
     expiry: null,
@@ -124,7 +111,6 @@ let userData = JSON.parse(localStorage.getItem('masarefy_user')) || {
     transactions: []
 };
 
-// ==================== 2. الزرار السري للأدمن ====================
 let clickCount = 0;
 document.getElementById('adminTrigger').addEventListener('click', () => {
     clickCount++;
@@ -140,7 +126,6 @@ document.getElementById('adminTrigger').addEventListener('click', () => {
     setTimeout(() => { clickCount = 0 }, 2000);
 });
 
-// ==================== 3. تفعيل VIP من الرابط ====================
 window.onload = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const vipCode = urlParams.get('vip');
@@ -157,13 +142,10 @@ window.onload = () => {
     updateUI();
 };
 
-// ==================== 4. تحديث الواجهة ====================
 function updateUI() {
-    // الرصيد
     let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل' ? t.amount : -t.amount), 0);
     document.getElementById('balance').innerText = balance.toFixed(2) + ' ج.م';
     
-    // السجل + زرار المسح
     document.getElementById('history').innerHTML = userData.transactions.map((t, index) => `
         <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center">
             <div>
@@ -177,7 +159,6 @@ function updateUI() {
         </div>
     `).reverse().join('');
 
-    // زرار وشارة VIP
     const vipBtn = document.getElementById('vipBtn');
     const vipBadge = document.getElementById('vipBadge');
     const freePlanBtn = document.getElementById('freePlanBtn');
@@ -201,7 +182,6 @@ function updateUI() {
         freePlanBtn.disabled = true;
     }
 
-    // حدود المجاني
     if (userData.plan === 'Free') {
         let expenseCount = userData.transactions.filter(t => t.type === 'مصروف').length;
         document.getElementById('limitText').innerText = `مصاريف هذا الشهر: ${expenseCount}/100`;
@@ -212,7 +192,6 @@ function updateUI() {
     localStorage.setItem('masarefy_user', JSON.stringify(userData));
 }
 
-// ==================== 5. إضافة وحذف المعاملات ====================
 function addTransaction(type) {
     if (type === 'مصروف' && userData.plan === 'Free') {
         let expenseCount = userData.transactions.filter(t => t.type === 'مصروف').length;
@@ -244,7 +223,6 @@ function clearAll() {
     }
 }
 
-// ==================== 6. نظام الأسعار والدفع ====================
 function showPricing() { document.getElementById('pricingModal').classList.remove('hidden'); }
 function closePricing() { document.getElementById('pricingModal').classList.add('hidden'); }
 
@@ -257,7 +235,6 @@ function subscribe(plan, duration, price) {
 }
 function closePayment() { document.getElementById('paymentModal').classList.add('hidden'); }
 
-// ==================== 7. لوحة الأدمن ====================
 function closeAdmin() { document.getElementById('adminModal').classList.add('hidden'); }
 
 function generateVipLink() {
@@ -280,7 +257,6 @@ function copyLink() {
     alert('تم نسخ الرابط');
 }
 
-// ==================== 8. المساعد الذكي AI ====================
 function askAI() {
     const today = new Date().toDateString();
     if (userData.lastQuestionDate !== today) {
@@ -290,7 +266,7 @@ function askAI() {
 
     let limit = userData.plan === 'Free' ? 3 : userData.plan === 'Pro' ? 5 : 999;
     if (userData.aiQuestionsToday >= limit) {
-        alert(`خلصت أسئلتك اليوم. رقي حسابك للمزيد`);
+        alert(`خلصت أسئلتك اليوم (${limit}). رقي حسابك للمزيد`);
         showPricing();
         return;
     }
@@ -301,10 +277,33 @@ function askAI() {
     userData.aiQuestionsToday++;
     updateUI();
     
-    // مكان ربط API ذكاء اصطناعي حقيقي بعدين
     let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل' ? t.amount : -t.amount), 0);
-    let expenseCount = userData.transactions.filter(t => t.type === 'مصروف').length;
-    alert(`سؤالك: ${question}\n\nالإجابة: حسب بياناتك الحالية رصيدك ${balance.toFixed(2)} ج.م وعدد المصاريف ${expenseCount}. هربط AI أقوى في Max قريب!`);
+    let expenses = userData.transactions.filter(t => t.type === 'مصروف');
+    let incomes = userData.transactions.filter(t => t.type === 'دخل');
+    let totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
+    let totalIncome = incomes.reduce((sum, t) => sum + t.amount, 0);
+    let avgExpense = expenses.length ? (totalExpense / expenses.length).toFixed(2) : 0;
+    
+    let answer = `سؤالك: ${question}\n\n`;
+    answer += `📊 تحليل سريع:\n`;
+    answer += `رصيدك: ${balance.toFixed(2)} ج.م\n`;
+    answer += `إجمالي الدخل: ${totalIncome.toFixed(2)} ج.م\n`;
+    answer += `إجمالي المصروف: ${totalExpense.toFixed(2)} ج.م\n`;
+    answer += `متوسط المصروف: ${avgExpense} ج.م\n`;
+    answer += `عدد العمليات: ${expenses.length} مصروف | ${incomes.length} دخل\n\n`;
+    
+    if (question.includes('اصرف') || question.includes('نصيحة')) {
+        if (balance < 0) answer += `⚠️ تحذير: رصيدك بالسالب! وقف صرف فوراً\n`;
+        else if (balance < 1000) answer += `💡 نصيحة: رصيدك قليل. اصرف في الضروريات بس\n`;
+        else if (totalExpense > totalIncome * 0.8) answer += `📈 نصيحة: بتصرف 80% من دخلك. حاول توفر 20% على الأقل\n`;
+        else answer += `✅ وضعك ممتاز! مكمل كده وادخر الباقي\n`;
+    }
+    
+    if (userData.plan !== 'Max') {
+        answer += `\n⭐ رقي لـ Max عشان تحليل أعمق + توقعات + AI حقيقي`;
+    }
+    
+    alert(answer);
 }
 
 updateUI();
