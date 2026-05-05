@@ -3,31 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masarefy v2.2</title>
+    <title>Masarefy v3 - Auth + Budget</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         body { font-family: 'Cairo', sans-serif; }
         .vip-badge { background: linear-gradient(45deg, #FFD700, #FFA500); }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
+        .progress-bar { transition: width 0.5s ease; }
     </style>
 </head>
 <body class="bg-gray-900 text-white p-4">
-    <div class="max-w-md mx-auto">
+    
+    <!-- شاشة تسجيل الدخول -->
+    <div id="authScreen" class="max-w-md mx-auto mt-20">
+        <h1 class="text-4xl font-bold text-cyan-400 text-center mb-8">Masarefy 💰</h1>
+        <div class="bg-gray-800 p-6 rounded-2xl">
+            <h2 class="text-2xl font-bold mb-4 text-center">تسجيل الدخول</h2>
+            <input id="email" type="email" placeholder="الإيميل" class="w-full bg-gray-700 p-3 rounded-lg mb-3">
+            <input id="password" type="password" placeholder="كلمة السر" class="w-full bg-gray-700 p-3 rounded-lg mb-4">
+            <button onclick="signInEmail()" class="w-full bg-cyan-600 p-3 rounded-lg font-bold mb-3">دخول بالإيميل</button>
+            <button onclick="signUpEmail()" class="w-full bg-gray-600 p-3 rounded-lg mb-3">حساب جديد</button>
+            <div class="text-center text-gray-400 my-3">أو</div>
+            <button onclick="signInGoogle()" class="w-full bg-white text-black p-3 rounded-lg font-bold flex items-center justify-center gap-2">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5"> دخول بجوجل
+            </button>
+        </div>
+    </div>
+
+    <!-- التطبيق الرئيسي -->
+    <div id="mainApp" class="max-w-md mx-auto hidden">
         
+        <!-- الهيدر -->
         <div class="flex justify-between items-center mb-6">
             <h1 id="adminTrigger" class="text-3xl font-bold text-cyan-400 select-none">Masarefy 💰</h1>
-            <button id="vipBtn" onclick="showPricing()" class="px-4 py-2 rounded-lg font-bold bg-gray-700 transition">⭐ رقي حسابك</button>
+            <div class="flex gap-2">
+                <button id="vipBtn" onclick="showPricing()" class="px-4 py-2 rounded-lg font-bold bg-gray-700 transition">⭐</button>
+                <button onclick="signOut()" class="px-3 py-2 rounded-lg bg-red-600 text-xs">خروج</button>
+            </div>
         </div>
 
         <div id="vipBadge" class="hidden vip-badge text-black p-2 rounded-lg text-center mb-4 font-bold"></div>
         
-        <div class="bg-gray-800 p-6 rounded-2xl mb-6 shadow-lg">
+        <!-- الرصيد -->
+        <div class="bg-gray-800 p-6 rounded-2xl mb-4 shadow-lg">
             <p class="text-gray-400">رصيدك الحالي</p>
             <p id="balance" class="text-4xl font-bold text-green-400">0.00 ج.م</p>
             <p id="limitText" class="text-xs text-gray-500 mt-2"></p>
         </div>
 
+        <!-- الميزانية الشهرية -->
+        <div class="bg-gray-800 p-4 rounded-2xl mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <p class="text-gray-400">ميزانية الشهر</p>
+                <button onclick="setBudget()" class="text-xs bg-cyan-600 px-3 py-1 rounded-lg">تعديل</button>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-3 mb-2">
+                <div id="budgetBar" class="progress-bar bg-green-500 h-3 rounded-full" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400">
+                <span id="spentText">صرفت: 0 ج.م</span>
+                <span id="budgetText">الميزانية: 0 ج.م</span>
+            </div>
+        </div>
+
+        <!-- الأزرار -->
         <div class="grid grid-cols-2 gap-4 mb-6">
             <button onclick="addTransaction('دخل')" class="bg-green-600 p-4 rounded-xl font-bold active:scale-95 transition">+ دخل</button>
             <button onclick="addTransaction('مصروف')" class="bg-red-600 p-4 rounded-xl font-bold active:scale-95 transition">- مصروف</button>
@@ -35,6 +75,7 @@
 
         <button onclick="askAI()" class="w-full bg-purple-600 p-3 rounded-xl font-bold mb-6 active:scale-95 transition">اسأل المساعد الذكي 🤖</button>
 
+        <!-- السجل -->
         <div class="flex justify-between items-center mb-3">
             <h2 class="text-xl font-bold">السجل</h2>
             <button onclick="clearAll()" class="text-xs bg-red-800 px-3 py-1 rounded-lg">مسح الكل 🗑️</button>
@@ -42,34 +83,32 @@
         <div id="history" class="space-y-2"></div>
     </div>
 
+    <!-- صفحة الأسعار Modal -->
     <div id="pricingModal" class="hidden fixed inset-0 bg-black bg-opacity-80 p-4 overflow-y-auto z-50">
         <div class="bg-gray-800 max-w-md mx-auto rounded-2xl p-6">
             <h2 class="text-2xl font-bold mb-4 text-center">اختر خطتك ⭐</h2>
-            
             <div class="border border-gray-600 p-4 rounded-xl mb-3">
                 <h3 class="font-bold">مجاني</h3>
                 <p class="text-sm text-gray-400">3 أسئلة AI + 100 مصروف/شهر</p>
                 <button id="freePlanBtn" class="mt-2 w-full bg-gray-600 p-2 rounded-lg" disabled>خطتك الحالية</button>
             </div>
-
             <div class="border-2 border-cyan-400 p-4 rounded-xl mb-3">
                 <h3 class="font-bold text-cyan-400">Pro - 25 ج.م/شهر</h3>
                 <p class="text-sm text-gray-400">5 أسئلة AI/يوم + مصاريف غير محدودة + PDF</p>
                 <button onclick="subscribe('Pro','month',25)" class="mt-2 w-full bg-cyan-600 p-2 rounded-lg font-bold">اشترك شهري</button>
                 <button onclick="subscribe('Pro','year',250)" class="mt-2 w-full bg-cyan-800 p-2 rounded-lg text-sm">سنوي 250ج وفر 50ج</button>
             </div>
-
             <div class="border-2 border-yellow-400 p-4 rounded-xl mb-3">
                 <h3 class="font-bold text-yellow-400">Max - 50 ج.م/شهر</h3>
                 <p class="text-sm text-gray-400">أسئلة AI غير محدودة + كل الميزات + تحليل ذكي فشخ</p>
                 <button onclick="subscribe('Max','month',50)" class="mt-2 w-full bg-yellow-600 text-black p-2 rounded-lg font-bold">اشترك شهري</button>
                 <button onclick="subscribe('Max','year',500)" class="mt-2 w-full bg-yellow-800 text-black p-2 rounded-lg text-sm">سنوي 500ج وفر 100ج</button>
             </div>
-
             <button onclick="closePricing()" class="w-full bg-red-600 p-2 rounded-lg mt-4">إغلاق</button>
         </div>
     </div>
 
+    <!-- صفحة الدفع Modal -->
     <div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-80 p-4 z-50">
         <div class="bg-gray-800 max-w-md mx-auto rounded-2xl p-6 text-center">
             <h2 class="text-2xl font-bold mb-4">إتمام الاشتراك</h2>
@@ -85,68 +124,147 @@
         </div>
     </div>
 
+    <!-- لوحة الأدمن Modal -->
     <div id="adminModal" class="hidden fixed inset-0 bg-black bg-opacity-90 p-4 z-50">
         <div class="bg-gray-800 max-w-md mx-auto rounded-2xl p-6">
             <h2 class="text-2xl font-bold mb-4 text-red-400">لوحة الأدمن 🔐</h2>
-            <input id="txId" placeholder="رقم العملية من العميل" class="w-full bg-gray-700 p-3 rounded-lg mb-3 text-center">
+            <input id="adminEmail" placeholder="إيميل العميل" class="w-full bg-gray-700 p-3 rounded-lg mb-3 text-center">
             <select id="planType" class="w-full bg-gray-700 p-3 rounded-lg mb-3">
                 <option value="Pro,month">Pro شهر</option>
                 <option value="Pro,year">Pro سنة</option>
                 <option value="Max,month">Max شهر</option>
                 <option value="Max,year">Max سنة</option>
             </select>
-            <button onclick="generateVipLink()" class="w-full bg-green-600 p-3 rounded-lg font-bold mb-3">توليد رابط التفعيل</button>
-            <input id="vipLink" readonly class="w-full bg-gray-900 p-2 rounded-lg text-xs mb-3 text-center">
-            <button onclick="copyLink()" class="w-full bg-blue-600 p-2 rounded-lg mb-3">نسخ الرابط</button>
+            <button onclick="activateVip()" class="w-full bg-green-600 p-3 rounded-lg font-bold mb-3">تفعيل VIP للعميل</button>
             <button onclick="closeAdmin()" class="w-full bg-red-600 p-2 rounded-lg">إغلاق</button>
         </div>
     </div>
 
-<script>
-let userData = JSON.parse(localStorage.getItem('masarefy_user')) || {
-    plan: 'Free',
-    expiry: null,
-    aiQuestionsToday: 0,
-    lastQuestionDate: null,
-    transactions: []
-};
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+  import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-let clickCount = 0;
-document.getElementById('adminTrigger').addEventListener('click', () => {
+  // الكونفيج بتاعك هنا
+  const firebaseConfig = {
+    apiKey: "AIzaSyBS3FCovS0LmOGgWSIOxoL3kiKe5mjkl1k",
+    authDomain: "masarefy-v6.firebaseapp.com",
+    projectId: "masarefy-v6",
+    storageBucket: "masarefy-v6.firebasestorage.app",
+    messagingSenderId: "362855388821",
+    appId: "1:362855388821:web:6bc34c415c520f60102d9c",
+    measurementId: "G-LNXCG5P1BJ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  let currentUser = null;
+  let userData = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      await loadUserData();
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+    } else {
+      currentUser = null;
+      document.getElementById('authScreen').classList.remove('hidden');
+      document.getElementById('mainApp').classList.add('hidden');
+    }
+  });
+
+  async function loadUserData() {
+    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+    if (userDoc.exists()) {
+      userData = userDoc.data();
+    } else {
+      userData = {
+        email: currentUser.email,
+        plan: 'Free',
+        expiry: null,
+        budget: 0,
+        aiQuestionsToday: 0,
+        lastQuestionDate: null
+      };
+      await setDoc(doc(db, 'users', currentUser.uid), userData);
+    }
+    await loadTransactions();
+    updateUI();
+  }
+
+  async function loadTransactions() {
+    const q = query(collection(db, 'transactions'), where('userId', '==', currentUser.uid));
+    const querySnapshot = await getDocs(q);
+    userData.transactions = [];
+    querySnapshot.forEach((doc) => {
+      userData.transactions.push({ id: doc.id, ...doc.data() });
+    });
+  }
+
+  window.signInEmail = async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert('خطأ: ' + error.message);
+    }
+  };
+
+  window.signUpEmail = async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert('خطأ: ' + error.message);
+    }
+  };
+
+  window.signInGoogle = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      alert('خطأ: ' + error.message);
+    }
+  };
+
+  window.signOut = async () => {
+    await signOut(auth);
+  };
+
+  let clickCount = 0;
+  document.getElementById('adminTrigger').addEventListener('click', () => {
     clickCount++;
     if (clickCount === 5) {
-        let pass = prompt('ادخل كلمة سر الأدمن:');
-        if (pass === 'Masarefy@V1_Admin#2026') {
-            document.getElementById('adminModal').classList.remove('hidden');
-        } else {
-            alert('كلمة السر غلط');
-        }
-        clickCount = 0;
+      let pass = prompt('ادخل كلمة سر الأدمن:');
+      if (pass === 'Masarefy@V1_Admin#2026') {
+        document.getElementById('adminModal').classList.remove('hidden');
+      } else {
+        alert('كلمة السر غلط');
+      }
+      clickCount = 0;
     }
     setTimeout(() => { clickCount = 0 }, 2000);
-});
+  });
 
-window.onload = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const vipCode = urlParams.get('vip');
-    if (vipCode) {
-        try {
-            const data = JSON.parse(atob(vipCode));
-            userData.plan = data.plan;
-            userData.expiry = data.expiry;
-            localStorage.setItem('masarefy_user', JSON.stringify(userData));
-            alert(`تم تفعيل ${data.plan} بنجاح لغاية ${new Date(data.expiry).toLocaleDateString('ar-EG')}`);
-            window.history.replaceState({}, document.title, window.location.pathname);
-        } catch(e) { alert('كود التفعيل غير صالح'); }
-    }
-    updateUI();
-};
-
-function updateUI() {
+  window.updateUI = async () => {
     let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل' ? t.amount : -t.amount), 0);
     document.getElementById('balance').innerText = balance.toFixed(2) + ' ج.م';
     
-    document.getElementById('history').innerHTML = userData.transactions.map((t, index) => `
+    let totalExpense = userData.transactions.filter(t => t.type === 'مصروف').reduce((sum, t) => sum + t.amount, 0);
+    let budgetPercent = userData.budget > 0 ? (totalExpense / userData.budget * 100) : 0;
+    document.getElementById('budgetBar').style.width = Math.min(budgetPercent, 100) + '%';
+    document.getElementById('budgetBar').className = `progress-bar h-3 rounded-full ${budgetPercent > 90 ? 'bg-red-500' : budgetPercent > 70 ? 'bg-yellow-500' : 'bg-green-500'}`;
+    document.getElementById('spentText').innerText = `صرفت: ${totalExpense.toFixed(2)} ج.م`;
+    document.getElementById('budgetText').innerText = `الميزانية: ${userData.budget.toFixed(2)} ج.م`;
+    
+    document.getElementById('history').innerHTML = userData.transactions.map((t) => `
         <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center">
             <div>
                 <span class="font-bold">${t.type}</span>
@@ -154,159 +272,178 @@ function updateUI() {
             </div>
             <div class="flex items-center gap-3">
                 <span class="${t.type === 'دخل' ? 'text-green-400' : 'text-red-400'} font-bold">${t.amount} ج.م</span>
-                <button onclick="deleteTransaction(${index})" class="bg-red-600 px-2 py-1 rounded text-xs">🗑️</button>
+                <button onclick="deleteTransaction('${t.id}')" class="bg-red-600 px-2 py-1 rounded text-xs">🗑️</button>
             </div>
         </div>
     `).reverse().join('');
 
     const vipBtn = document.getElementById('vipBtn');
     const vipBadge = document.getElementById('vipBadge');
-    const freePlanBtn = document.getElementById('freePlanBtn');
-    
     if (userData.plan !== 'Free' && new Date(userData.expiry) > new Date()) {
-        vipBtn.innerText = `⭐ ${userData.plan}`;
-        vipBtn.classList.add('vip-badge', 'text-black');
-        vipBadge.classList.remove('hidden');
-        vipBadge.innerText = `مشترك ${userData.plan} حتى ${new Date(userData.expiry).toLocaleDateString('ar-EG')}`;
-        freePlanBtn.innerText = 'ترقية';
-        freePlanBtn.disabled = false;
-        freePlanBtn.classList.remove('bg-gray-600');
-        freePlanBtn.classList.add('bg-cyan-600');
-        freePlanBtn.onclick = showPricing;
+      vipBtn.innerText = `⭐ ${userData.plan}`;
+      vipBtn.classList.add('vip-badge', 'text-black');
+      vipBadge.classList.remove('hidden');
+      vipBadge.innerText = `مشترك ${userData.plan} حتى ${new Date(userData.expiry).toLocaleDateString('ar-EG')}`;
     } else {
-        userData.plan = 'Free';
-        vipBtn.innerText = '⭐ رقي حسابك';
-        vipBtn.classList.remove('vip-badge', 'text-black');
-        vipBadge.classList.add('hidden');
-        freePlanBtn.innerText = 'خطتك الحالية';
-        freePlanBtn.disabled = true;
+      userData.plan = 'Free';
+      vipBtn.innerText = '⭐ رقي حسابك';
+      vipBtn.classList.remove('vip-badge', 'text-black');
+      vipBadge.classList.add('hidden');
     }
 
     if (userData.plan === 'Free') {
-        let expenseCount = userData.transactions.filter(t => t.type === 'مصروف').length;
-        document.getElementById('limitText').innerText = `مصاريف هذا الشهر: ${expenseCount}/100`;
+      let expenseCount = userData.transactions.filter(t => t.type === 'مصروف').length;
+      document.getElementById('limitText').innerText = `مصاريف هذا الشهر: ${expenseCount}/100`;
     } else {
-        document.getElementById('limitText').innerText = '';
+      document.getElementById('limitText').innerText = '';
     }
-    
-    localStorage.setItem('masarefy_user', JSON.stringify(userData));
-}
+  };
 
-function addTransaction(type) {
+  window.addTransaction = async (type) => {
     if (type === 'مصروف' && userData.plan === 'Free') {
-        let expenseCount = userData.transactions.filter(t => t.type === 'مصروف').length;
-        if (expenseCount >= 100) {
-            alert('وصلت للحد الأقصى 100 مصروف. رقي حسابك للـ Pro');
-            showPricing();
-            return;
-        }
+      let expenseCount = userData.transactions.filter(t => t.type === 'مصروف').length;
+      if (expenseCount >= 100) {
+        alert('وصلت للحد الأقصى 100 مصروف. رقي حسابك للـ Pro');
+        showPricing();
+        return;
+      }
     }
     
     let amount = parseFloat(prompt(`ادخل قيمة ${type}:`));
     if (!amount || amount <= 0) return;
-    userData.transactions.push({type, amount, date: new Date().toLocaleDateString('ar-EG')});
+    
+    const newTx = {
+      userId: currentUser.uid,
+      type,
+      amount,
+      date: new Date().toLocaleDateString('ar-EG'),
+      timestamp: new Date().toISOString()
+    };
+    
+    const docRef = await addDoc(collection(db, 'transactions'), newTx);
+    userData.transactions.push({ id: docRef.id, ...newTx });
     updateUI();
-}
+  };
 
-function deleteTransaction(index) {
+  window.deleteTransaction = async (id) => {
     if (confirm('متأكد عايز تمسح المعاملة دي؟')) {
-        userData.transactions.splice(userData.transactions.length - 1 - index, 1);
-        updateUI();
+      await deleteDoc(doc(db, 'transactions', id));
+      userData.transactions = userData.transactions.filter(t => t.id !== id);
+      updateUI();
     }
-}
+  };
 
-function clearAll() {
+  window.clearAll = async () => {
     if (userData.transactions.length === 0) return;
-    if (confirm('متأكد عايز تمسح كل السجل؟ العملية دي مفيهاش رجوع!')) {
-        userData.transactions = [];
-        updateUI();
+    if (confirm('متأكد عايز تمسح كل السجل؟')) {
+      for (let tx of userData.transactions) {
+        await deleteDoc(doc(db, 'transactions', tx.id));
+      }
+      userData.transactions = [];
+      updateUI();
     }
-}
+  };
 
-function showPricing() { document.getElementById('pricingModal').classList.remove('hidden'); }
-function closePricing() { document.getElementById('pricingModal').classList.add('hidden'); }
+  window.setBudget = async () => {
+    let newBudget = parseFloat(prompt('ادخل الميزانية الشهرية:', userData.budget));
+    if (!newBudget || newBudget <= 0) return;
+    userData.budget = newBudget;
+    await updateDoc(doc(db, 'users', currentUser.uid), { budget: newBudget });
+    updateUI();
+  };
 
-function subscribe(plan, duration, price) {
+  window.showPricing = () => document.getElementById('pricingModal').classList.remove('hidden');
+  window.closePricing = () => document.getElementById('pricingModal').classList.add('hidden');
+
+  window.subscribe = (plan, duration, price) => {
     closePricing();
     document.getElementById('paymentModal').classList.remove('hidden');
     document.getElementById('planDetails').innerText = `${plan} - ${duration === 'month' ? 'شهر' : 'سنة'} - ${price} ج.م`;
-    let msg = `مرحبا، حولت ${price}ج لاشتراك Masarefy ${plan} ${duration}. رقم العملية: `;
+    let msg = `مرحبا، حولت ${price}ج لاشتراك Masarefy ${plan} ${duration}. إيميلي: ${currentUser.email}`;
     document.getElementById('whatsappLink').href = `https://wa.me/201121898023?text=${encodeURIComponent(msg)}`;
-}
-function closePayment() { document.getElementById('paymentModal').classList.add('hidden'); }
+  };
+  window.closePayment = () => document.getElementById('paymentModal').classList.add('hidden');
 
-function closeAdmin() { document.getElementById('adminModal').classList.add('hidden'); }
-
-function generateVipLink() {
-    const txId = document.getElementById('txId').value;
-    if (!txId) return alert('دخل رقم العملية');
+  window.closeAdmin = () => document.getElementById('adminModal').classList.add('hidden');
+  window.activateVip = async () => {
+    const email = document.getElementById('adminEmail').value;
+    if (!email) return alert('دخل إيميل العميل');
     const [plan, duration] = document.getElementById('planType').value.split(',');
     const expiry = new Date();
     if (duration === 'month') expiry.setMonth(expiry.getMonth() + 1);
     else expiry.setFullYear(expiry.getFullYear() + 1);
     
-    const data = { plan, expiry: expiry.toISOString(), txId };
-    const code = btoa(JSON.stringify(data));
-    const link = `${window.location.origin}${window.location.pathname}?vip=${code}`;
-    document.getElementById('vipLink').value = link;
-}
+    const q = query(collection(db, 'users'), where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) return alert('الإيميل مش موجود');
+    
+    querySnapshot.forEach(async (docSnap) => {
+      await updateDoc(doc(db, 'users', docSnap.id), {
+        plan: plan,
+        expiry: expiry.toISOString()
+      });
+    });
+    alert(`تم تفعيل ${plan} للعميل ${email}`);
+    closeAdmin();
+  };
 
-function copyLink() {
-    document.getElementById('vipLink').select();
-    document.execCommand('copy');
-    alert('تم نسخ الرابط');
-}
-
-function askAI() {
+  window.askAI = async () => {
     const today = new Date().toDateString();
     if (userData.lastQuestionDate !== today) {
-        userData.aiQuestionsToday = 0;
-        userData.lastQuestionDate = today;
+      userData.aiQuestionsToday = 0;
+      userData.lastQuestionDate = today;
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        aiQuestionsToday: 0,
+        lastQuestionDate: today
+      });
     }
 
     let limit = userData.plan === 'Free' ? 3 : userData.plan === 'Pro' ? 5 : 999;
     if (userData.aiQuestionsToday >= limit) {
-        alert(`خلصت أسئلتك اليوم (${limit}). رقي حسابك للمزيد`);
-        showPricing();
-        return;
+      alert(`خلصت أسئلتك اليوم (${limit}). رقي حسابك للمزيد`);
+      showPricing();
+      return;
     }
 
     let question = prompt('اسأل المساعد الذكي عن مصاريفك:');
     if (!question) return;
     
     userData.aiQuestionsToday++;
-    updateUI();
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      aiQuestionsToday: userData.aiQuestionsToday
+    });
     
     let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل' ? t.amount : -t.amount), 0);
     let expenses = userData.transactions.filter(t => t.type === 'مصروف');
     let incomes = userData.transactions.filter(t => t.type === 'دخل');
     let totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
     let totalIncome = incomes.reduce((sum, t) => sum + t.amount, 0);
-    let avgExpense = expenses.length ? (totalExpense / expenses.length).toFixed(2) : 0;
+    let avgExpense = expenses.length ? (totalExpense / expenses.length) : 0;
     
     let answer = `سؤالك: ${question}\n\n`;
     answer += `📊 تحليل سريع:\n`;
     answer += `رصيدك: ${balance.toFixed(2)} ج.م\n`;
     answer += `إجمالي الدخل: ${totalIncome.toFixed(2)} ج.م\n`;
     answer += `إجمالي المصروف: ${totalExpense.toFixed(2)} ج.م\n`;
-    answer += `متوسط المصروف: ${avgExpense} ج.م\n`;
-    answer += `عدد العمليات: ${expenses.length} مصروف | ${incomes.length} دخل\n\n`;
+    answer += `متوسط المصروف: ${avgExpense.toFixed(2)} ج.م\n`;
+    answer += `الميزانية: ${userData.budget.toFixed(2)} ج.م | المتبقي: ${(userData.budget - totalExpense).toFixed(2)} ج.م\n\n`;
     
-    if (question.includes('اصرف') || question.includes('نصيحة')) {
-        if (balance < 0) answer += `⚠️ تحذير: رصيدك بالسالب! وقف صرف فوراً\n`;
-        else if (balance < 1000) answer += `💡 نصيحة: رصيدك قليل. اصرف في الضروريات بس\n`;
-        else if (totalExpense > totalIncome * 0.8) answer += `📈 نصيحة: بتصرف 80% من دخلك. حاول توفر 20% على الأقل\n`;
-        else answer += `✅ وضعك ممتاز! مكمل كده وادخر الباقي\n`;
+    if (userData.budget > 0 && totalExpense > userData.budget * 0.9) {
+      answer += `⚠️ تحذير: قربت تخلص ميزانيتك!\n`;
+    } else if (balance < 0) {
+      answer += `⚠️ تحذير: رصيدك بالسالب! وقف صرف فوراً\n`;
+    } else {
+      answer += `✅ وضعك تمام! كمل كده\n`;
     }
     
     if (userData.plan !== 'Max') {
-        answer += `\n⭐ رقي لـ Max عشان تحليل أعمق + توقعات + AI حقيقي`;
+      answer += `\n⭐ رقي لـ Max عشان تحليل أعمق + AI حقيقي`;
     }
     
     alert(answer);
-}
+    updateUI();
+  };
 
-updateUI();
 </script>
 </body>
 </html>
