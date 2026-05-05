@@ -19,6 +19,14 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
+const translations = {
+  ar: { settings: "⚙️ الإعدادات", name: "الاسم", budget: "الميزانية الشهرية", language: "اللغة", currency: "العملة", theme: "المظهر", cancel: "إلغاء", save: "حفظ", balance: "رصيدك الحالي", budgetTitle: "ميزانية الشهر", spent: "صرفت", income: "+ دخل", expense: "- مصروف", askAI: "اسأل المساعد الذكي", transactions: "السجل", deleteAll: "مسح الكل", chartTitle: "تحليل المصاريف", week: "أسبوع", month: "شهر", year: "سنة", upgrade: "⭐️ رقي حسابك" },
+  en: { settings: "⚙️ Settings", name: "Name", budget: "Monthly Budget", language: "Language", currency: "Currency", theme: "Theme", cancel: "Cancel", save: "Save", balance: "Current Balance", budgetTitle: "Monthly Budget", spent: "Spent", income: "+ Income", expense: "- Expense", askAI: "Ask Smart Assistant", transactions: "History", deleteAll: "Clear All", chartTitle: "Expense Analysis", week: "Week", month: "Month", year: "Year", upgrade: "⭐️ Upgrade" },
+  fr: { settings: "⚙️ Paramètres", name: "Nom", budget: "Budget Mensuel", language: "Langue", currency: "Devise", theme: "Thème", cancel: "Annuler", save: "Enregistrer", balance: "Solde Actuel", budgetTitle: "Budget Mensuel", spent: "Dépensé", income: "+ Revenu", expense: "- Dépense", askAI: "Assistant IA", transactions: "Historique", deleteAll: "Tout Effacer", chartTitle: "Analyse des Dépenses", week: "Semaine", month: "Mois", year: "Année", upgrade: "⭐️ Mettre à niveau" },
+  es: { settings: "⚙️ Ajustes", name: "Nombre", budget: "Presupuesto Mensual", language: "Idioma", currency: "Moneda", theme: "Tema", cancel: "Cancelar", save: "Guardar", balance: "Saldo Actual", budgetTitle: "Presupuesto Mensual", spent: "Gastado", income: "+ Ingreso", expense: "- Gasto", askAI: "Asistente IA", transactions: "Historial", deleteAll: "Borrar Todo", chartTitle: "Análisis de Gastos", week: "Semana", month: "Mes", year: "Año", upgrade: "⭐️ Mejorar" },
+  de: { settings: "⚙️ Einstellungen", name: "Name", budget: "Monatsbudget", language: "Sprache", currency: "Währung", theme: "Thema", cancel: "Abbrechen", save: "Speichern", balance: "Aktueller Saldo", budgetTitle: "Monatsbudget", spent: "Ausgegeben", income: "+ Einnahme", expense: "- Ausgabe", askAI: "KI-Assistent", transactions: "Verlauf", deleteAll: "Alles Löschen", chartTitle: "Ausgabenanalyse", week: "Woche", month: "Monat", year: "Jahr", upgrade: "⭐️ Upgrade" }
+};
+const currencySymbols = { EGP: "ج.م", USD: "$", EUR: "€", SAR: "ر.س", AED: "د.إ" };
 let currentUser = null;
 let userData = null;
 let currentTxType = 'مصروف';

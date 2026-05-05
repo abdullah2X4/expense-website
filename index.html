@@ -19,8 +19,10 @@
             <p id="userName" class="text-sm text-slate-400"></p>
         </div>
         <div class="flex gap-2">
-            <button onclick="window.location.href='pricing.html'" id="vipBtn" class="px-4 py-3 rounded-2xl font-bold bg-slate-800 btn-active">⭐️</button>
-            <button onclick="showSettings()" class="p-3 rounded-2xl bg-slate-800 btn-active">⚙️</button>
+<div class="flex gap-2">
+    <button id="vipBtn" onclick="window.location.href='pricing.html'" class="vip-badge text-black px-4 py-2 rounded-xl text-xs font-bold btn-active" data-i18n="upgrade">⭐️ رقي حسابك</button>
+    <button onclick="showSettings()" class="glass px-3 py-2 rounded-xl text-xs btn-active">⚙️</button>
+</div>
         </div>
     </div>
 
@@ -148,6 +150,54 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- Settings Modal -->
+<div id="settingsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end justify-center z-50 animate-fade-up">
+    <div id="settingsModalSheet" class="glass w-full max-w-md rounded-t-3xl p-6 bottom-sheet">
+        <div class="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-4"></div>
+        <h3 class="text-xl font-bold mb-4" data-i18n="settings">⚙️ الإعدادات</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="text-sm text-slate-400" data-i18n="name">الاسم</label>
+                <input id="settingsName" class="w-full input-dark p-3 rounded-xl mt-1" />
+            </div>
+            <div>
+                <label class="text-sm text-slate-400" data-i18n="budget">الميزانية الشهرية</label>
+                <input id="settingsBudget" type="number" class="w-full input-dark p-3 rounded-xl mt-1" />
+            </div>
+            <div>
+                <label class="text-sm text-slate-400" data-i18n="language">اللغة</label>
+                <select id="settingsLang" class="w-full input-dark p-3 rounded-xl mt-1">
+                    <option value="ar">🇪🇬 العربية</option>
+                    <option value="en">🇺🇸 English</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="de">🇩🇪 Deutsch</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-sm text-slate-400" data-i18n="currency">العملة</label>
+                <select id="settingsCurrency" class="w-full input-dark p-3 rounded-xl mt-1">
+                    <option value="EGP">ج.م - جنيه مصري</option>
+                    <option value="USD">$ - US Dollar</option>
+                    <option value="EUR">€ - Euro</option>
+                    <option value="SAR">ر.س - ريال سعودي</option>
+                    <option value="AED">د.إ - درهم إماراتي</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-sm text-slate-400" data-i18n="theme">المظهر</label>
+                <select id="settingsTheme" class="w-full input-dark p-3 rounded-xl mt-1">
+                    <option value="dark">🌙 داكن</option>
+                    <option value="light">☀️ فاتح</option>
+                </select>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mt-6">
+            <button onclick="closeSettings()" class="bg-slate-700 p-3 rounded-xl btn-active" data-i18n="cancel">إلغاء</button>
+            <button onclick="saveSettings()" class="bg-emerald-600 p-3 rounded-xl btn-active" data-i18n="save">حفظ</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
 
