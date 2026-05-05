@@ -93,7 +93,10 @@ async function loadUserData() {
       budget: 5000,
       categories: defaultCategories,
       aiQuestionsToday: 0,
-      lastQuestionDate: null
+      lastQuestionDate: null,
+      language: 'ar',
+      currency: 'EGP',
+      theme: 'dark',
     };
     await setDoc(doc(db, 'users', currentUser.uid), userData);
   }
@@ -195,28 +198,34 @@ async function activateVipForEmail(email, plan, expiry) {
 window.updateUI = async () => {
   if (!userData) return;
   
-  let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل' ? t.amount : -t.amount), 0);
-  document.getElementById('balance').innerText = balance.toFixed(2) + ' ج.م';
+  applyLanguage(userData.language || 'ar');
+  applyTheme(userData.theme || 'dark');
   
-  let totalExpense = userData.transactions.filter(t => t.type === 'مصروف').reduce((sum, t) => sum + t.amount, 0);
+  const t = translations[userData.language] || translations.ar;
+  
+  let balance = userData.transactions.reduce((sum, tr) => sum + (tr.type === 'دخل' ? tr.amount : -tr.amount), 0);
+  document.getElementById('balance').innerText = formatCurrency(balance);
+  
+  let totalExpense = userData.transactions.filter(tr => tr.type === 'مصروف').reduce((sum, tr) => sum + tr.amount, 0);
   let budgetPercent = userData.budget > 0 ? (totalExpense / userData.budget * 100) : 0;
   document.getElementById('budgetBar').style.width = Math.min(budgetPercent, 100) + '%';
   document.getElementById('budgetBar').className = `progress-bar h-2.5 rounded-full ${budgetPercent > 90 ? 'bg-red-500' : budgetPercent > 70 ? 'bg-amber-500' : 'bg-emerald-500'}`;
-  document.getElementById('spentText').innerText = `صرفت: ${totalExpense.toFixed(2)} ج.م`;
-  document.getElementById('budgetText').innerText = `الميزانية: ${userData.budget.toFixed(2)} ج.م`;
   
-  document.getElementById('history').innerHTML = userData.transactions.map((t) => `
+  document.getElementById('spentText').innerText = `${t.spent}: ${formatCurrency(totalExpense)}`;
+  document.getElementById('budgetText').innerText = `${t.budget}: ${formatCurrency(userData.budget)}`;
+  
+  document.getElementById('history').innerHTML = userData.transactions.map((tr) => `
     <div class="glass p-4 rounded-2xl flex justify-between items-center animate-slide-right">
       <div class="flex items-center gap-3">
-        <span class="text-3xl">${t.icon || '💰'}</span>
+        <span class="text-3xl">${tr.icon || '💰'}</span>
         <div>
-          <span class="font-bold">${t.name || t.type}</span>
-          <span class="text-xs text-slate-400 block">${t.category || ''} • ${t.date}</span>
+          <span class="font-bold">${tr.name || tr.type}</span>
+          <span class="text-xs text-slate-400 block">${tr.category || ''} • ${tr.date}</span>
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <span class="${t.type === 'دخل' ? 'text-emerald-400' : 'text-rose-400'} font-bold text-lg">${t.amount} ج.م</span>
-        <button onclick="deleteTransaction('${t.id}')" class="bg-red-600 px-3 py-2 rounded-xl text-xs btn-active">🗑️</button>
+        <span class="${tr.type === 'دخل' ? 'text-emerald-400' : 'text-rose-400'} font-bold text-lg">${formatCurrency(tr.amount)}</span>
+        <button onclick="deleteTransaction('${tr.id}')" class="bg-red-600 px-3 py-2 rounded-xl text-xs btn-active">🗑️</button>
       </div>
     </div>
   `).reverse().join('');
@@ -227,22 +236,26 @@ window.updateUI = async () => {
     vipBtn.innerText = `⭐️ ${userData.plan}`;
     vipBtn.classList.add('vip-badge', 'text-black');
     vipBadge.classList.remove('hidden');
-    vipBadge.innerText = `مشترك ${userData.plan} حتى ${new Date(userData.expiry).toLocaleDateString('ar-EG')}`;
+    vipBadge.innerText = `Plan: ${userData.plan} - Exp: ${new Date(userData.expiry).toLocaleDateString(userData.language)}`;
   } else {
     userData.plan = 'Free';
-    vipBtn.innerText = '⭐️ رقي حسابك';
+    vipBtn.innerText = t.upgrade;
     vipBtn.classList.remove('vip-badge', 'text-black');
     vipBadge.classList.add('hidden');
   }
 
   if (userData.plan === 'Free') {
-    let expenseCount = userData.transactions.filter(t => t.type === 'مصروف').length;
-    document.getElementById('limitText').innerText = `مصاريف هذا الشهر: ${expenseCount}/100`;
+    let expenseCount = userData.transactions.filter(tr => tr.type === 'مصروف').length;
+    document.getElementById('limitText').innerText = `${t.spent}: ${expenseCount}/100`;
   } else {
     document.getElementById('limitText').innerText = '';
   }
   
   setTimeout(renderEmojis, 100);
+  
+  if (userData.transactions.filter(tr => tr.type === 'مصروف').length > 0) {
+    setTimeout(() => updateChart('month'), 500);
+  }
 };
 
 // Modals
