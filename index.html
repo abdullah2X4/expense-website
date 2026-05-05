@@ -1,203 +1,204 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0f172a">
-    <title>Masarefy - الرئيسية</title>
-    <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Wallet v7</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Cairo', sans-serif; }
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; }
+    body.light { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #0f172a; }
+    body.light .glass { background: rgba(255,255,255,0.8); color: #0f172a; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+    .gradient-text { background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .btn-active:active { transform: scale(0.95); }
+    .sheet { transform: translateY(100%); transition: transform 0.3s ease; }
+    .sheet.show { transform: translateY(0); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.5s ease; }
+    .animate-fade-up { animation: fadeInUp 0.5s ease; }
+  </style>
 </head>
-<body class="text-slate-100 p-4 pb-24">
-    
-    <!-- الهيدر -->
+<body class="text-white">
+
+  <!-- Login Screen -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-6">
+    <div class="glass p-8 rounded-3xl w-full max-w-md text-center animate-fade-in">
+      <div class="text-6xl mb-4">💰</div>
+      <h1 class="text-3xl font-bold gradient-text mb-2">Smart Wallet</h1>
+      <p class="text-slate-400 mb-8">إدارة أموالك بذكاء</p>
+      <button id="googleLoginBtn" class="w-full bg-white text-slate-900 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 btn-active">
+        <span class="text-2xl">🔐</span> تسجيل الدخول بجوجل
+      </button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="appScreen" class="hidden min-h-screen p-4 pb-24">
+    <!-- Header -->
     <div class="flex justify-between items-center mb-6 animate-fade-up">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full flex items-center justify-center text-2xl">👤</div>
         <div>
-            <h1 id="adminTrigger" class="text-3xl font-bold text-cyan-400 select-none">Masarefy</h1>
-            <p id="userName" class="text-sm text-slate-400"></p>
+          <p class="text-slate-400 text-sm" data-i18n="welcome">أهلاً بيك</p>
+          <h2 id="userName" class="text-xl font-bold"></h2>
         </div>
-        <div class="flex gap-2">
-<div class="flex gap-2">
-    <button id="vipBtn" onclick="window.location.href='pricing.html'" class="vip-badge text-black px-4 py-2 rounded-xl text-xs font-bold btn-active" data-i18n="upgrade">⭐️ رقي حسابك</button>
-    <button id="settingsBtn" class="bg-slate-800 p-4 rounded-full btn-active">⚙️</button>
-</div>
-        </div>
+      <div class="flex gap-2">
+        <button id="vipBtn" class="bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 rounded-xl text-sm font-bold btn-active">⭐ VIP</button>
+        <button id="settingsBtn" class="bg-slate-800 p-3 rounded-full btn-active">⚙️</button>
+      </div>
     </div>
 
-    <div id="vipBadge" class="hidden vip-badge text-black p-3 rounded-2xl text-center mb-4 font-bold animate-scale"></div>
-    
-    <!-- الرصيد -->
-    <div class="glass p-6 rounded-3xl mb-4 shadow-xl animate-fade-up">
-        <p class="text-slate-400 text-sm mb-1">رصيدك الحالي</p>
-        <p id="balance" class="text-5xl font-bold text-emerald-400">0.00 ج.م</p>
-        <p id="limitText" class="text-xs text-slate-500 mt-3"></p>
+    <!-- Balance Card -->
+    <div class="glass p-6 rounded-3xl mb-6 animate-fade-up">
+      <p class="text-slate-400 text-sm mb-2" data-i18n="totalBalance">الرصيد الكلي</p>
+      <h1 id="balance" class="text-4xl font-bold gradient-text mb-4">0 ج.م</h1>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-emerald-500/20 p-4 rounded-2xl">
+          <p class="text-emerald-400 text-sm mb-1" data-i18n="income">الدخل</p>
+          <p id="totalIncome" class="text-xl font-bold">0 ج.م</p>
+        </div>
+        <div class="bg-rose-500/20 p-4 rounded-2xl">
+          <p class="text-rose-400 text-sm mb-1" data-i18n="expenses">المصروفات</p>
+          <p id="totalExpenses" class="text-xl font-bold">0 ج.م</p>
+        </div>
+      </div>
     </div>
 
-    <!-- الميزانية الشهرية -->
+    <!-- Budget Progress -->
     <div class="glass p-5 rounded-3xl mb-6 animate-fade-up">
-        <div class="flex justify-between items-center mb-3">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">📊</span>
-                <p class="text-slate-300 font-semibold">ميزانية الشهر</p>
-            </div>
-            <button onclick="setBudget()" class="text-xs bg-cyan-600 px-4 py-2 rounded-xl btn-active">تعديل</button>
-        </div>
-        <div class="w-full bg-slate-700 rounded-full h-2.5 mb-3 overflow-hidden">
-            <div id="budgetBar" class="progress-bar bg-emerald-500 h-2.5 rounded-full" style="width: 0%"></div>
-        </div>
-        <div class="flex justify-between text-xs text-slate-400">
-            <span id="spentText">صرفت: 0 ج.م</span>
-            <span id="budgetText">الميزانية: 0 ج.م</span>
-        </div>
-    </div>
-    <!-- كارت الإحصائيات v6 -->
-    <div id="statsCard" class="glass p-5 rounded-3xl mb-6 animate-fade-up hidden">
-        <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">📊</span>
-                <p class="text-slate-300 font-semibold">تحليل المصاريف</p>
-            </div>
-            <button onclick="exportPDF()" class="text-xs bg-rose-600 px-4 py-2 rounded-xl btn-active">PDF 📄</button>
-        </div>
-        <div class="bg-slate-800/30 rounded-2xl p-3">
-            <canvas id="expenseChart" height="200"></canvas>
-        </div>
-        <div class="grid grid-cols-3 gap-2 mt-3 text-xs text-center">
-            <button onclick="updateChart('week')" class="bg-slate-700 p-2 rounded-xl btn-active">أسبوع</button>
-            <button onclick="updateChart('month')" class="bg-cyan-600 p-2 rounded-xl btn-active">شهر</button>
-            <button onclick="updateChart('year')" class="bg-slate-700 p-2 rounded-xl btn-active">سنة</button>
-        </div>
-    </div>
-    <!-- الأزرار -->
-    <div class="grid grid-cols-2 gap-3 mb-6 animate-fade-up">
-        <button onclick="showAddModal('دخل')" class="bg-emerald-600 p-5 rounded-2xl font-bold btn-active flex flex-col items-center gap-2">
-            <span class="text-3xl">💵</span>
-            <span>+ دخل</span>
-        </button>
-        <button onclick="showAddModal('مصروف')" class="bg-rose-600 p-5 rounded-2xl font-bold btn-active flex flex-col items-center gap-2">
-            <span class="text-3xl">💸</span>
-            <span>- مصروف</span>
-        </button>
+      <div class="flex justify-between items-center mb-3">
+        <p class="text-slate-300 font-semibold" data-i18n="monthlyBudget">الميزانية الشهرية</p>
+        <p id="budgetText" class="text-sm text-slate-400">0 / 0</p>
+      </div>
+      <div class="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
+        <div id="budgetBar" class="bg-gradient-to-r from-emerald-500 to-cyan-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+      </div>
     </div>
 
-    <button onclick="askAI()" class="w-full bg-violet-600 p-4 rounded-2xl font-bold mb-6 btn-active animate-fade-up flex items-center justify-center gap-2">
-        <span class="text-2xl">🤖</span>
-        <span>اسأل المساعد الذكي</span>
+    <!-- Chart -->
+    <div id="statsCard" class="glass p-5 rounded-3xl mb-6 animate-fade-up">
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📊</span>
+          <p class="text-slate-300 font-semibold" data-i18n="stats">الإحصائيات</p>
+        </div>
+        <button id="exportBtn" class="text-xs bg-rose-600 px-3 py-2 rounded-lg btn-active">📄 PDF</button>
+      </div>
+      <div class="bg-slate-800/30 rounded-2xl p-3">
+        <canvas id="expenseChart" height="200"></canvas>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mt-3 text-xs text-center">
+        <button id="chartWeekBtn" class="bg-slate-700 py-2 rounded-lg btn-active">أسبوع</button>
+        <button id="chartMonthBtn" class="bg-cyan-600 py-2 rounded-lg btn-active">شهر</button>
+        <button id="chartYearBtn" class="bg-slate-700 py-2 rounded-lg btn-active">سنة</button>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-2 gap-3 mb-6 animate-fade-up">
+      <button id="addBtn" class="bg-emerald-600 p-5 rounded-2xl text-center btn-active">
+        <span class="text-3xl block mb-1">➕</span>
+        <span class="font-semibold" data-i18n="addIncome">إضافة دخل</span>
+      </button>
+      <button id="expenseBtn" class="bg-rose-600 p-5 rounded-2xl text-center btn-active">
+        <span class="text-3xl block mb-1">➖</span>
+        <span class="font-semibold" data-i18n="addExpense">إضافة مصروف</span>
+      </button>
+    </div>
+
+    <!-- AI Assistant -->
+    <button id="askAIBtn" class="w-full bg-violet-600 p-4 rounded-2xl mb-6 flex items-center justify-center gap-3 btn-active animate-fade-up">
+      <span class="text-2xl">🤖</span>
+      <span class="font-bold" data-i18n="askAI">اسأل المساعد الذكي</span>
     </button>
 
-    <!-- السجل -->
+    <!-- Transactions -->
     <div class="flex justify-between items-center mb-4 animate-fade-up">
-        <h2 class="text-xl font-bold">السجل</h2>
-        <button onclick="clearAll()" class="text-xs bg-red-900 px-4 py-2 rounded-xl btn-active flex items-center gap-1">
-            <span>🗑️</span>
-            <span>مسح الكل</span>
-        </button>
+      <h2 class="text-xl font-bold" data-i18n="transactions">المعاملات</h2>
+      <button id="deleteAllBtn" class="text-xs bg-red-900 px-4 py-2 rounded-lg btn-active" data-i18n="deleteAll">مسح الكل</button>
     </div>
-    <div id="history" class="space-y-3"></div>
+    <div id="transactionsList" class="space-y-3"></div>
+  </div>
 
-    <!-- Modals -->
-    <div id="addModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm p-4 z-50 flex items-end">
-        <div class="glass w-full max-w-md mx-auto rounded-t-3xl p-6 bottom-sheet" id="addModalSheet">
-            <div class="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-6"></div>
-            <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-center">إضافة مصروف</h2>
-            <input id="txName" placeholder="اسم المصروف - مثلا: كشري" class="w-full input-dark p-4 rounded-2xl mb-3">
-            <input id="txAmount" type="number" placeholder="المبلغ" class="w-full input-dark p-4 rounded-2xl mb-3">
-            <select id="txCategory" class="w-full input-dark p-4 rounded-2xl mb-3"></select>
-            <button onclick="showAddCategory()" class="w-full text-sm text-cyan-400 mb-6 py-2">+ إضافة فئة جديدة</button>
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="saveTransaction()" class="bg-emerald-600 p-4 rounded-2xl font-bold btn-active">حفظ</button>
-                <button onclick="closeAddModal()" class="bg-slate-700 p-4 rounded-2xl btn-active">إلغاء</button>
-            </div>
+  <!-- Add Transaction Modal -->
+  <div id="addModal" class="fixed inset-0 bg-black bg-opacity-70 hidden z-50">
+    <div id="addModalSheet" class="fixed bottom-0 left-0 right-0 glass p-6 rounded-t-3xl sheet">
+      <h3 id="modalTitle" class="text-xl font-bold mb-4">إضافة معاملة</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm text-slate-400" data-i18n="amount">المبلغ</label>
+          <input id="transAmount" type="number" class="w-full mt-2 bg-slate-800 p-3 rounded-xl" placeholder="0">
         </div>
+        <div>
+          <label class="text-sm text-slate-400" data-i18n="category">الفئة</label>
+          <select id="transCategory" class="w-full mt-2 bg-slate-800 p-3 rounded-xl"></select>
+        </div>
+        <div>
+          <label class="text-sm text-slate-400" data-i18n="note">ملاحظة</label>
+          <input id="transNote" type="text" class="w-full mt-2 bg-slate-800 p-3 rounded-xl" placeholder="اختياري">
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button id="cancelAddBtn" class="flex-1 bg-slate-700 py-3 rounded-xl btn-active" data-i18n="cancel">إلغاء</button>
+        <button id="saveTransBtn" class="flex-1 bg-emerald-600 py-3 rounded-xl btn-active" data-i18n="save">حفظ</button>
+      </div>
     </div>
+  </div>
 
-    <div id="categoryModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm p-4 z-50 flex items-end">
-        <div class="glass w-full max-w-md mx-auto rounded-t-3xl p-6 bottom-sheet" id="categoryModalSheet">
-            <div class="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-6"></div>
-            <h2 class="text-2xl font-bold mb-6 text-center">فئة جديدة</h2>
-            <input id="newCategoryName" placeholder="اسم الفئة - مثلا: قهوة" class="w-full input-dark p-4 rounded-2xl mb-3">
-            <input id="newCategoryIcon" placeholder="أيقونة - مثلا: ☕️" maxlength="2" class="w-full input-dark p-4 rounded-2xl mb-6 text-center text-3xl">
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="saveCategory()" class="bg-emerald-600 p-4 rounded-2xl font-bold btn-active">حفظ</button>
-                <button onclick="closeCategoryModal()" class="bg-slate-700 p-4 rounded-2xl btn-active">إلغاء</button>
-            </div>
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-70 hidden z-50">
+    <div id="settingsModalSheet" class="fixed bottom-0 left-0 right-0 glass p-6 rounded-t-3xl sheet">
+      <h3 class="text-xl font-bold mb-4" data-i18n="settings">⚙️ الإعدادات</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm text-slate-400" data-i18n="name">الاسم</label>
+          <input id="settingsName" type="text" class="w-full mt-2 bg-slate-800 p-3 rounded-xl">
         </div>
+        <div>
+          <label class="text-sm text-slate-400" data-i18n="budget">الميزانية الشهرية</label>
+          <input id="settingsBudget" type="number" class="w-full mt-2 bg-slate-800 p-3 rounded-xl">
+        </div>
+        <div>
+          <label class="text-sm text-slate-400" data-i18n="language">اللغة</label>
+          <select id="settingsLang" class="w-full mt-2 bg-slate-800 p-3 rounded-xl">
+            <option value="ar">🇪🇬 العربية</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="de">🇩🇪 Deutsch</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-slate-400" data-i18n="currency">العملة</label>
+          <select id="settingsCurrency" class="w-full mt-2 bg-slate-800 p-3 rounded-xl">
+            <option value="EGP">🇪🇬 EGP</option>
+            <option value="USD">🇺🇸 USD</option>
+            <option value="EUR">🇪🇺 EUR</option>
+            <option value="SAR">🇸🇦 SAR</option>
+            <option value="AED">🇦🇪 AED</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-slate-400" data-i18n="theme">المظهر</label>
+          <select id="settingsTheme" class="w-full mt-2 bg-slate-800 p-3 rounded-xl">
+            <option value="dark">🌙 داكن</option>
+            <option value="light">☀️ فاتح</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button id="cancelSettingsBtn" class="flex-1 bg-slate-700 py-3 rounded-xl btn-active" data-i18n="cancel">إلغاء</button>
+        <button id="saveSettingsBtn" class="flex-1 bg-emerald-600 py-3 rounded-xl btn-active" data-i18n="save">حفظ</button>
+      </div>
     </div>
+  </div>
 
-    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm p-4 z-50 flex items-end">
-        <div class="glass w-full max-w-md mx-auto rounded-t-3xl p-6 bottom-sheet" id="settingsModalSheet">
-            <div class="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-6"></div>
-            <h2 class="text-2xl font-bold mb-6 text-center">الإعدادات ⚙️</h2>
-            <div class="space-y-4 mb-6">
-                <div class="bg-slate-800/50 p-4 rounded-2xl">
-                    <p class="text-sm text-slate-400 mb-2">الاسم</p>
-                    <input id="settingsName" placeholder="اسمك" class="w-full input-dark p-3 rounded-xl">
-                </div>
-                <div class="bg-slate-800/50 p-4 rounded-2xl">
-                    <p class="text-sm text-slate-400 mb-2">الميزانية الشهرية</p>
-                    <input id="settingsBudget" type="number" placeholder="0" class="w-full input-dark p-3 rounded-xl">
-                </div>
-                <button onclick="saveSettings()" class="w-full bg-cyan-600 p-4 rounded-2xl font-bold btn-active">حفظ الإعدادات</button>
-                <button onclick="signOut()" class="w-full bg-red-600 p-4 rounded-2xl font-bold btn-active">تسجيل خروج</button>
-            </div>
-            <button onclick="closeSettings()" class="w-full bg-slate-700 p-4 rounded-2xl btn-active">إغلاق</button>
-        </div>
-    </div>
-
-    <script type="module" src="app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<!-- Settings Modal -->
-<div id="settingsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end justify-center z-50 animate-fade-up">
-    <div id="settingsModalSheet" class="glass w-full max-w-md rounded-t-3xl p-6 bottom-sheet">
-        <div class="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-4"></div>
-        <h3 class="text-xl font-bold mb-4" data-i18n="settings">⚙️ الإعدادات</h3>
-        <div class="space-y-4">
-            <div>
-                <label class="text-sm text-slate-400" data-i18n="name">الاسم</label>
-                <input id="settingsName" class="w-full input-dark p-3 rounded-xl mt-1" />
-            </div>
-            <div>
-                <label class="text-sm text-slate-400" data-i18n="budget">الميزانية الشهرية</label>
-                <input id="settingsBudget" type="number" class="w-full input-dark p-3 rounded-xl mt-1" />
-            </div>
-            <div>
-                <label class="text-sm text-slate-400" data-i18n="language">اللغة</label>
-                <select id="settingsLang" class="w-full input-dark p-3 rounded-xl mt-1">
-                    <option value="ar">🇪🇬 العربية</option>
-                    <option value="en">🇺🇸 English</option>
-                    <option value="fr">🇫🇷 Français</option>
-                    <option value="es">🇪🇸 Español</option>
-                    <option value="de">🇩🇪 Deutsch</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-sm text-slate-400" data-i18n="currency">العملة</label>
-                <select id="settingsCurrency" class="w-full input-dark p-3 rounded-xl mt-1">
-                    <option value="EGP">ج.م - جنيه مصري</option>
-                    <option value="USD">$ - US Dollar</option>
-                    <option value="EUR">€ - Euro</option>
-                    <option value="SAR">ر.س - ريال سعودي</option>
-                    <option value="AED">د.إ - درهم إماراتي</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-sm text-slate-400" data-i18n="theme">المظهر</label>
-                <select id="settingsTheme" class="w-full input-dark p-3 rounded-xl mt-1">
-                    <option value="dark">🌙 داكن</option>
-                    <option value="light">☀️ فاتح</option>
-                </select>
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3 mt-6">
-            <button onclick="closeSettings()" class="bg-slate-700 p-3 rounded-xl btn-active" data-i18n="cancel">إلغاء</button>
-            <button onclick="saveSettings()" class="bg-emerald-600 p-3 rounded-xl btn-active" data-i18n="save">حفظ</button>
-        </div>
-    </div>
-</div>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
-

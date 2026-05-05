@@ -254,15 +254,28 @@ window.updateUI = async () => {
   }
   
   setTimeout(renderEmojis, 100);
-  
+
   if (userData.transactions.filter(tr => tr.type === 'مصروف').length > 0) {
     setTimeout(() => updateChart('month'), 500);
   }
 
-
-    document.getElementById('settingsBtn')?.addEventListener('click', showSettings);
-  document.getElementById('addBtn')?.addEventListener('click', showAddModal);
- };
+  // ربط كل الزراير
+  document.getElementById('settingsBtn')?.addEventListener('click', showSettings);
+  document.getElementById('vipBtn')?.addEventListener('click', () => window.location.href='pricing.html');
+  document.getElementById('addBtn')?.addEventListener('click', () => showAddModal('دخل'));
+  document.getElementById('expenseBtn')?.addEventListener('click', () => showAddModal('مصروف'));
+  document.getElementById('askAIBtn')?.addEventListener('click', askAI);
+  document.getElementById('deleteAllBtn')?.addEventListener('click', deleteAllTransactions);
+  document.getElementById('exportBtn')?.addEventListener('click', exportPDF);
+  document.getElementById('chartWeekBtn')?.addEventListener('click', () => updateChart('week'));
+  document.getElementById('chartMonthBtn')?.addEventListener('click', () => updateChart('month'));
+  document.getElementById('chartYearBtn')?.addEventListener('click', () => updateChart('year'));
+  document.getElementById('googleLoginBtn')?.addEventListener('click', signInWithGoogle);
+  document.getElementById('cancelAddBtn')?.addEventListener('click', closeAddModal);
+  document.getElementById('saveTransBtn')?.addEventListener('click', saveTransaction);
+  document.getElementById('cancelSettingsBtn')?.addEventListener('click', closeSettings);
+  document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettings);
+};
 
 // Modals
 window.showAddModal = (type) => {
