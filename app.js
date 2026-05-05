@@ -542,3 +542,69 @@ window.updateUI = async () => {
     setTimeout(() => updateChart('month'), 500);
   }
 };
+// v7: Settings Functions
+window.showSettings = () => {
+  document.getElementById('settingsName').value = userData.name;
+  document.getElementById('settingsBudget').value = userData.budget;
+  document.getElementById('settingsLang').value = userData.language || 'ar';
+  document.getElementById('settingsCurrency').value = userData.currency || 'EGP';
+  document.getElementById('settingsTheme').value = userData.theme || 'dark';
+  document.getElementById('settingsModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('settingsModalSheet').classList.add('show'), 10);
+};
+
+window.closeSettings = () => {
+  document.getElementById('settingsModalSheet').classList.remove('show');
+  setTimeout(() => document.getElementById('settingsModal').classList.add('hidden'), 400);
+};
+
+window.saveSettings = async () => {
+  userData.name = document.getElementById('settingsName').value;
+  userData.budget = parseFloat(document.getElementById('settingsBudget').value) || 0;
+  userData.language = document.getElementById('settingsLang').value;
+  userData.currency = document.getElementById('settingsCurrency').value;
+  userData.theme = document.getElementById('settingsTheme').value;
+  
+  await updateDoc(doc(db, 'users', currentUser.uid), { 
+    name: userData.name, 
+    budget: userData.budget,
+    language: userData.language,
+    currency: userData.currency,
+    theme: userData.theme
+  });
+  
+  applyLanguage(userData.language);
+  applyTheme(userData.theme);
+  document.getElementById('userName').innerText = userData.name;
+  closeSettings();
+  updateUI();
+};
+
+function applyLanguage(lang) {
+  const t = translations[lang] || translations.ar;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.innerText = t[key];
+  });
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+}
+
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.body.classList.add('light');
+  } else {
+    document.body.classList.remove('light');
+  }
+}
+
+function formatCurrency(amount) {
+  const symbol = currencySymbols[userData.currency] || 'ج.م';
+  return `${amount.toFixed(2)} ${symbol}`;
+}
+
+// عدّل userData الافتراضي
+// ابحث عن userData = { و ضيف السطور دي جواه:
+  language: 'ar',
+  currency: 'EGP',
+  theme: 'dark',
