@@ -101,7 +101,8 @@ async function loadUserData() {
     await setDoc(doc(db, 'users', currentUser.uid), userData);
   }
   if (!userData.categories) userData.categories = defaultCategories;
-  await loadTransactions();
+ await loadTransactions();
+ updateUI();
 }
 
 async function loadTransactions() {
