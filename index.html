@@ -1,1 +1,69 @@
-<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=login.html"></head></html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Wallet - لوحة التحكم</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="p-4 md:p-6">
+  <div class="max-w-7xl mx-auto">
+    <header class="flex justify-between items-center mb-8 animate-fade-up">
+      <div class="flex items-center gap-4">
+        <div class="text-5xl">💰</div>
+        <div>
+          <h1 class="text-3xl font-bold gradient-text">Smart Wallet</h1>
+          <p id="welcomeUser" class="text-slate-400">أهلاً بيك</p>
+        </div>
+      </div>
+      <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded-xl font-bold btn-active">تسجيل خروج</button>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="glass p-6 rounded-3xl animate-fade-up" style="animation-delay: 0.1s">
+        <p class="text-slate-400 text-sm mb-2">إجمالي الدخل</p>
+        <h2 id="totalIncome" class="text-4xl font-bold text-emerald-400">0.00 ج.م</h2>
+      </div>
+      <div class="glass p-6 rounded-3xl animate-fade-up" style="animation-delay: 0.2s">
+        <p class="text-slate-400 text-sm mb-2">إجمالي المصاريف</p>
+        <h2 id="totalExpenses" class="text-4xl font-bold text-red-400">0.00 ج.م</h2>
+      </div>
+      <div class="glass p-6 rounded-3xl animate-fade-up" style="animation-delay: 0.3s">
+        <p class="text-slate-400 text-sm mb-2">الرصيد الحالي</p>
+        <h2 id="currentBalance" class="text-4xl font-bold text-sky-400">0.00 ج.م</h2>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 glass p-6 rounded-3xl animate-fade-up" style="animation-delay: 0.4s">
+        <h3 class="text-xl font-bold mb-4">آخر المعاملات</h3>
+        <div id="transactionsList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+      </div>
+      
+      <div class="glass p-6 rounded-3xl animate-fade-up" style="animation-delay: 0.5s">
+        <h3 class="text-xl font-bold mb-4">إضافة معاملة</h3>
+        <div class="space-y-4">
+          <input id="amountInput" type="number" class="w-full input-dark p-3 rounded-xl" placeholder="المبلغ">
+          <select id="typeInput" class="w-full input-dark p-3 rounded-xl">
+            <option value="expense">مصروف</option>
+            <option value="income">دخل</option>
+          </select>
+          <input id="categoryInput" type="text" class="w-full input-dark p-3 rounded-xl" placeholder="الفئة: أكل، مواصلات...">
+          <input id="noteInput" type="text" class="w-full input-dark p-3 rounded-xl" placeholder="ملاحظة">
+          <button id="addTransactionBtn" class="w-full bg-emerald-600 py-3 rounded-xl font-bold btn-active">إضافة</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass p-6 rounded-3xl mt-6 animate-fade-up" style="animation-delay: 0.6s">
+      <h3 class="text-xl font-bold mb-4">تحليل المصروفات</h3>
+      <canvas id="expenseChart"></canvas>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

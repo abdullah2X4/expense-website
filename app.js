@@ -1,610 +1,205 @@
-window.onerror = function(msg, url, line) { alert('Error: ' + msg + '\nLine: ' + line); };
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut as firebaseSignOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
+// Smart Wallet v7.0 - Firebase CDN Version
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, collection, addDoc, query, where, onSnapshot, deleteDoc, doc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
+// بيانات مشروعك - حطيتها خلاص
 const firebaseConfig = {
   apiKey: "AIzaSyBS3FCovS0LmOGgWSIOxoL3kiKe5mjkl1k",
   authDomain: "masarefy-v6.firebaseapp.com",
   projectId: "masarefy-v6",
   storageBucket: "masarefy-v6.firebasestorage.app",
   messagingSenderId: "362855388821",
-  appId: "1:362855388821:web:6bc34c415c520f60102d9c",
-  measurementId: "G-LNXCG5P1BJ"
+  appId: "1:362855388821:web:6bc34c415c520f60102d9c"
 };
 
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider();
+const provider = new GoogleAuthProvider();
 
-const translations = {
-  ar: { settings: "⚙️ الإعدادات", name: "الاسم", budget: "الميزانية الشهرية", language: "اللغة", currency: "العملة", theme: "المظهر", cancel: "إلغاء", save: "حفظ", balance: "رصيدك الحالي", budgetTitle: "ميزانية الشهر", spent: "صرفت", income: "+ دخل", expense: "- مصروف", askAI: "اسأل المساعد الذكي", transactions: "السجل", deleteAll: "مسح الكل", chartTitle: "تحليل المصاريف", week: "أسبوع", month: "شهر", year: "سنة", upgrade: "⭐️ رقي حسابك" },
-  en: { settings: "⚙️ Settings", name: "Name", budget: "Monthly Budget", language: "Language", currency: "Currency", theme: "Theme", cancel: "Cancel", save: "Save", balance: "Current Balance", budgetTitle: "Monthly Budget", spent: "Spent", income: "+ Income", expense: "- Expense", askAI: "Ask Smart Assistant", transactions: "History", deleteAll: "Clear All", chartTitle: "Expense Analysis", week: "Week", month: "Month", year: "Year", upgrade: "⭐️ Upgrade" },
-  fr: { settings: "⚙️ Paramètres", name: "Nom", budget: "Budget Mensuel", language: "Langue", currency: "Devise", theme: "Thème", cancel: "Annuler", save: "Enregistrer", balance: "Solde Actuel", budgetTitle: "Budget Mensuel", spent: "Dépensé", income: "+ Revenu", expense: "- Dépense", askAI: "Assistant IA", transactions: "Historique", deleteAll: "Tout Effacer", chartTitle: "Analyse des Dépenses", week: "Semaine", month: "Mois", year: "Année", upgrade: "⭐️ Mettre à niveau" },
-  es: { settings: "⚙️ Ajustes", name: "Nombre", budget: "Presupuesto Mensual", language: "Idioma", currency: "Moneda", theme: "Tema", cancel: "Cancelar", save: "Guardar", balance: "Saldo Actual", budgetTitle: "Presupuesto Mensual", spent: "Gastado", income: "+ Ingreso", expense: "- Gasto", askAI: "Asistente IA", transactions: "Historial", deleteAll: "Borrar Todo", chartTitle: "Análisis de Gastos", week: "Semana", month: "Mes", year: "Año", upgrade: "⭐️ Mejorar" },
-  de: { settings: "⚙️ Einstellungen", name: "Name", budget: "Monatsbudget", language: "Sprache", currency: "Währung", theme: "Thema", cancel: "Abbrechen", save: "Speichern", balance: "Aktueller Saldo", budgetTitle: "Monatsbudget", spent: "Ausgegeben", income: "+ Einnahme", expense: "- Ausgabe", askAI: "KI-Assistent", transactions: "Verlauf", deleteAll: "Alles Löschen", chartTitle: "Ausgabenanalyse", week: "Woche", month: "Monat", year: "Jahr", upgrade: "⭐️ Upgrade" }
-};
-const currencySymbols = { EGP: "ج.م", USD: "$", EUR: "€", SAR: "ر.س", AED: "د.إ" };
 let currentUser = null;
-let userData = null;
-let currentTxType = 'مصروف';
+let unsubscribeTransactions = null;
+let expenseChart = null;
 
-const defaultCategories = [
-  { name: 'أكل', icon: '🍔' },
-  { name: 'مواصلات', icon: '🚗' },
-  { name: 'فواتير', icon: '💡' },
-  { name: 'ترفيه', icon: '🎮' },
-  { name: 'صحة', icon: '💊' },
-  { name: 'تسوق', icon: '🛍️' },
-  { name: 'قهوة', icon: '☕️' },
-  { name: 'أخرى', icon: '📦' }
-];
+console.log('Firebase initialized');
 
-// PWA Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgZXZlbnQgPT4geyBldmVudC53YWl0VW50aWwoc2VsZi5za2lwV2FpdGluZygpKTsgfSk7IHNlbGYuYWRkRXZlbnRMaXN0ZW5lcignZmV0Y2gnLCBldmVudCA9PiB7IGV2ZW50LnJlc3BvbmRXaXRoKGZldGNoKGV2ZW50LnJlcXVlc3QpKTsgfSk7');
+// تشغيل حسب الصفحة
+if (document.getElementById('googleLoginBtn')) {
+  console.log('Login page detected');
+  initLoginPage();
+} else if (document.getElementById('logoutBtn')) {
+  console.log('Dashboard detected');
+  initDashboard();
 }
 
-function renderEmojis() {
-  if (window.twemoji) {
-    twemoji.parse(document.body, {
-      folder: 'svg',
-      ext: '.svg',
-      base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
-    });
-  }
-}
+// صفحة تسجيل الدخول
+function initLoginPage() {
+  const googleBtn = document.getElementById('googleLoginBtn');
+  const emailBtn = document.getElementById('emailLoginBtn');
+  const signupBtn = document.getElementById('emailSignupBtn');
+  const emailInput = document.getElementById('emailInput');
+  const passInput = document.getElementById('passwordInput');
 
-// Auth Functions - موحدة
-window.signInWithEmail = async () => {
-  const email = document.getElementById('emailInput')?.value;
-  const password = document.getElementById('passwordInput')?.value;
-  if (!email ||!password) return alert('اكتب الإيميل والباسورد');
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    if (error.code === 'auth/user-not-found') alert('الإيميل ده مش مسجل');
-    else if (error.code === 'auth/wrong-password') alert('كلمة المرور غلط');
-    else if (error.code === 'auth/invalid-email') alert('الإيميل غير صحيح');
-    else alert('خطأ: ' + error.message);
-  }
-};
-
-window.signUpWithEmail = async () => {
-  const email = document.getElementById('emailInput')?.value;
-  const password = document.getElementById('passwordInput')?.value;
-  if (!email ||!password) return alert('اكتب الإيميل والباسورد');
-  if (password.length < 6) return alert('الباسورد لازم 6 حروف على الأقل');
-
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    if (error.code === 'auth/email-already-in-use') alert('الإيميل ده مستخدم بالفعل');
-    else if (error.code === 'auth/invalid-email') alert('الإيميل غير صحيح');
-    else alert('خطأ: ' + error.message);
-  }
-};
-
-window.signInWithGoogle = async () => {
-  try {
-    await signInWithPopup(auth, googleProvider);
-  } catch (error) {
-    alert('خطأ في تسجيل دخول جوجل: ' + error.message);
-  }
-};
-
-window.signOut = async () => {
-  if (confirm('متأكد عايز تسجل خروج؟')) {
-    await firebaseSignOut(auth);
-  }
-};
-
-// مراقبة حالة تسجيل الدخول
-onAuthStateChanged(auth, async (user) => {
-  const isLoginPage = window.location.pathname.includes('login.html');
-
-  if (user) {
-    currentUser = user;
-    await loadUserData();
-    if (isLoginPage) {
+  googleBtn?.addEventListener('click', async () => {
+    console.log('Google button clicked');
+    try {
+      await signInWithPopup(auth, provider);
       window.location.href = 'index.html';
-    } else {
-      const userNameEl = document.getElementById('userName');
-      if (userNameEl) userNameEl.innerText = userData.name || user.email;
-      updateUI();
+    } catch (err) {
+      alert('خطأ جوجل: ' + err.message);
+      console.error(err);
     }
-  } else {
-    if (!isLoginPage &&!window.location.pathname.includes('pricing.html')) {
+  });
+
+  emailBtn?.addEventListener('click', async () => {
+    console.log('Email login clicked');
+    try {
+      await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+      window.location.href = 'index.html';
+    } catch (err) {
+      alert('خطأ تسجيل الدخول: ' + err.message);
+    }
+  });
+
+  signupBtn?.addEventListener('click', async () => {
+    console.log('Signup clicked');
+    try {
+      await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
+      window.location.href = 'index.html';
+    } catch (err) {
+      alert('خطأ إنشاء الحساب: ' + err.message);
+    }
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) window.location.href = 'index.html';
+  });
+}
+
+// الصفحة الرئيسية
+function initDashboard() {
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
       window.location.href = 'login.html';
-    }
-  }
-  setTimeout(renderEmojis, 100);
-});
-
-async function loadUserData() {
-  const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-  if (userDoc.exists()) {
-    userData = userDoc.data();
-  } else {
-    userData = {
-      email: currentUser.email,
-      name: currentUser.displayName || 'مستخدم جديد',
-      plan: 'Free',
-      expiry: null,
-      budget: 5000,
-      categories: defaultCategories,
-      aiQuestionsToday: 0,
-      lastQuestionDate: null,
-      language: 'ar',
-      currency: 'EGP',
-      theme: 'dark',
-    };
-    await setDoc(doc(db, 'users', currentUser.uid), userData);
-  }
-  if (!userData.categories) userData.categories = defaultCategories;
-  await loadTransactions();
-  updateUI();
-}
-
-async function loadTransactions() {
-  const q = query(collection(db, 'transactions'), where('userId', '==', currentUser.uid));
-  const querySnapshot = await getDocs(q);
-  userData.transactions = [];
-  querySnapshot.forEach((doc) => {
-    userData.transactions.push({ id: doc.id,...doc.data() });
-  });
-}
-
-// باسورد الأدمن
-let clickCount = 0;
-document.getElementById('adminTrigger')?.addEventListener('click', () => {
-  clickCount++;
-  if (clickCount === 5) {
-    let pass = prompt('ادخل كلمة سر الأدمن:');
-    if (pass === 'Masarefy@V4_Admin#2026') {
-      showAdminPanel();
-    } else {
-      alert('كلمة السر غلط');
-    }
-    clickCount = 0;
-  }
-  setTimeout(() => { clickCount = 0 }, 2000);
-});
-
-function showAdminPanel() {
-  const email = prompt('إيميل العميل:');
-  if (!email) return;
-  const plan = prompt('الخطة (Pro/Max):', 'Pro');
-  const duration = prompt('المدة (month/year):', 'month');
-  if (!plan ||!duration) return;
-
-  const expiry = new Date();
-  if (duration === 'month') expiry.setMonth(expiry.getMonth() + 1);
-  else expiry.setFullYear(expiry.getFullYear() + 1);
-
-  activateVipForEmail(email, plan, expiry.toISOString());
-}
-
-async function activateVipForEmail(email, plan, expiry) {
-  const q = query(collection(db, 'users'), where('email', '==', email));
-  const querySnapshot = await getDocs(q);
-  if (querySnapshot.empty) return alert('الإيميل مش موجود');
-
-  querySnapshot.forEach(async (docSnap) => {
-    await updateDoc(doc(db, 'users', docSnap.id), {
-      plan: plan,
-      expiry: expiry
-    });
-  });
-  alert(`تم تفعيل ${plan} للعميل ${email}`);
-}
-
-window.updateUI = async () => {
-  if (!userData) return;
-
-  applyLanguage(userData.language || 'ar');
-  applyTheme(userData.theme || 'dark');
-
-  const t = translations[userData.language] || translations.ar;
-
-  let balance = userData.transactions.reduce((sum, tr) => sum + (tr.type === 'دخل'? tr.amount : -tr.amount), 0);
-  document.getElementById('balance').innerText = formatCurrency(balance);
-
-  let totalExpense = userData.transactions.filter(tr => tr.type === 'مصروف').reduce((sum, tr) => sum + tr.amount, 0);
-  let budgetPercent = userData.budget > 0? (totalExpense / userData.budget * 100) : 0;
-  document.getElementById('budgetBar').style.width = Math.min(budgetPercent, 100) + '%';
-  document.getElementById('budgetBar').className = `progress-bar h-2.5 rounded-full ${budgetPercent > 90? 'bg-red-500' : budgetPercent > 70? 'bg-amber-500' : 'bg-emerald-500'}`;
-
-  document.getElementById('spentText').innerText = `${t.spent}: ${formatCurrency(totalExpense)}`;
-  document.getElementById('budgetText').innerText = `${t.budget}: ${formatCurrency(userData.budget)}`;
-
-  document.getElementById('history').innerHTML = userData.transactions.map((tr) => `
-    <div class="glass p-4 rounded-2xl flex justify-between items-center animate-slide-right">
-      <div class="flex items-center gap-3">
-        <span class="text-3xl">${tr.icon || '💰'}</span>
-        <div>
-          <span class="font-bold">${tr.name || tr.type}</span>
-          <span class="text-xs text-slate-400 block">${tr.category || ''} • ${tr.date}</span>
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="${tr.type === 'دخل'? 'text-emerald-400' : 'text-rose-400'} font-bold text-lg">${formatCurrency(tr.amount)}</span>
-        <button onclick="deleteTransaction('${tr.id}')" class="bg-red-600 px-3 py-2 rounded-xl text-xs btn-active">🗑️</button>
-      </div>
-    </div>
-  `).reverse().join('');
-
-  const vipBtn = document.getElementById('vipBtn');
-  const vipBadge = document.getElementById('vipBadge');
-  if (userData.plan!== 'Free' && new Date(userData.expiry) > new Date()) {
-    vipBtn.innerText = `⭐️ ${userData.plan}`;
-    vipBtn.classList.add('vip-badge', 'text-black');
-    vipBadge.classList.remove('hidden');
-    vipBadge.innerText = `Plan: ${userData.plan} - Exp: ${new Date(userData.expiry).toLocaleDateString(userData.language)}`;
-  } else {
-    userData.plan = 'Free';
-    vipBtn.innerText = t.upgrade;
-    vipBtn.classList.remove('vip-badge', 'text-black');
-    vipBadge.classList.add('hidden');
-  }
-
-  if (userData.plan === 'Free') {
-    let expenseCount = userData.transactions.filter(tr => tr.type === 'مصروف').length;
-    document.getElementById('limitText').innerText = `${t.spent}: ${expenseCount}/100`;
-  } else {
-    document.getElementById('limitText').innerText = '';
-  }
-
-  setTimeout(renderEmojis, 100);
-
-  if (userData.transactions.filter(tr => tr.type === 'مصروف').length > 0) {
-    setTimeout(() => updateChart('month'), 500);
-  }
-
-  // ربط كل الزراير - مهم جداً
-  document.getElementById('settingsBtn')?.addEventListener('click', showSettings);
-  document.getElementById('vipBtn')?.addEventListener('click', () => window.location.href='pricing.html');
-  document.getElementById('addBtn')?.addEventListener('click', () => showAddModal('دخل'));
-  document.getElementById('expenseBtn')?.addEventListener('click', () => showAddModal('مصروف'));
-  document.getElementById('askAIBtn')?.addEventListener('click', askAI);
-  document.getElementById('deleteAllBtn')?.addEventListener('click', deleteAllTransactions);
-  document.getElementById('exportBtn')?.addEventListener('click', exportPDF);
-  document.getElementById('chartWeekBtn')?.addEventListener('click', () => updateChart('week'));
-  document.getElementById('chartMonthBtn')?.addEventListener('click', () => updateChart('month'));
-  document.getElementById('chartYearBtn')?.addEventListener('click', () => updateChart('year'));
-  document.getElementById('googleLoginBtn')?.addEventListener('click', signInWithGoogle);
-  document.getElementById('emailLoginBtn')?.addEventListener('click', signInWithEmail);
-  document.getElementById('emailSignupBtn')?.addEventListener('click', signUpWithEmail);
-  document.getElementById('cancelAddBtn')?.addEventListener('click', closeAddModal);
-  document.getElementById('saveTransBtn')?.addEventListener('click', saveTransaction);
-  document.getElementById('cancelSettingsBtn')?.addEventListener('click', closeSettings);
-  document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettings);
-};
-
-// Modals
-window.showAddModal = (type) => {
-  currentTxType = type;
-  document.getElementById('modalTitle').innerText = `إضافة ${type}`;
-  document.getElementById('txName').value = '';
-  document.getElementById('txAmount').value = '';
-
-  const select = document.getElementById('txCategory');
-  select.innerHTML = '<option value="">اختر الفئة</option>';
-  userData.categories.forEach(cat => {
-    select.innerHTML += `<option value="${cat.name}">${cat.icon} ${cat.name}</option>`;
-  });
-
-  document.getElementById('addModal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('addModalSheet').classList.add('show'), 10);
-};
-
-window.closeAddModal = () => {
-  document.getElementById('addModalSheet').classList.remove('show');
-  setTimeout(() => document.getElementById('addModal').classList.add('hidden'), 400);
-};
-
-window.saveTransaction = async () => {
-  if (currentTxType === 'مصروف' && userData.plan === 'Free') {
-    let expenseCount = userData.transactions.filter(t => t.type === 'مصروف').length;
-    if (expenseCount >= 100) {
-      alert('وصلت للحد الأقصى 100 مصروف. رقي حسابك للـ Pro');
-      closeAddModal();
-      window.location.href = 'pricing.html';
       return;
     }
-  }
-
-  const name = document.getElementById('txName').value;
-  const amount = parseFloat(document.getElementById('txAmount').value);
-  const category = document.getElementById('txCategory').value;
-
-  if (!name ||!amount || amount <= 0) return alert('ادخل الاسم والمبلغ');
-  if (currentTxType === 'مصروف' &&!category) return alert('اختر الفئة');
-
-  const icon = userData.categories.find(c => c.name === category)?.icon || '💰';
-
-  const newTx = {
-    userId: currentUser.uid,
-    type: currentTxType,
-    name,
-    amount,
-    category,
-    icon,
-    date: new Date().toLocaleDateString('ar-EG'),
-    timestamp: new Date().toISOString()
-  };
-
-  const docRef = await addDoc(collection(db, 'transactions'), newTx);
-  userData.transactions.push({ id: docRef.id,...newTx });
-  closeAddModal();
-  updateUI();
-};
-
-window.showAddCategory = () => {
-  document.getElementById('categoryModal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('categoryModalSheet').classList.add('show'), 10);
-};
-
-window.closeCategoryModal = () => {
-  document.getElementById('categoryModalSheet').classList.remove('show');
-  setTimeout(() => document.getElementById('categoryModal').classList.add('hidden'), 400);
-};
-
-window.saveCategory = async () => {
-  const name = document.getElementById('newCategoryName').value;
-  const icon = document.getElementById('newCategoryIcon').value;
-  if (!name ||!icon) return alert('ادخل الاسم والأيقونة');
-
-  userData.categories.push({ name, icon });
-  await updateDoc(doc(db, 'users', currentUser.uid), { categories: userData.categories });
-
-  const select = document.getElementById('txCategory');
-  select.innerHTML += `<option value="${name}">${icon} ${name}</option>`;
-  select.value = name;
-
-  closeCategoryModal();
-  renderEmojis();
-};
-
-window.deleteTransaction = async (id) => {
-  if (confirm('متأكد عايز تمسح المعاملة دي؟')) {
-    await deleteDoc(doc(db, 'transactions', id));
-    userData.transactions = userData.transactions.filter(t => t.id!== id);
-    updateUI();
-  }
-};
-
-window.clearAll = async () => {
-  if (userData.transactions.length === 0) return;
-  if (confirm('متأكد عايز تمسح كل السجل؟')) {
-    for (let tx of userData.transactions) {
-      await deleteDoc(doc(db, 'transactions', tx.id));
-    }
-    userData.transactions = [];
-    updateUI();
-  }
-};
-
-window.setBudget = async () => {
-  let newBudget = parseFloat(prompt('ادخل الميزانية الشهرية:', userData.budget));
-  if (!newBudget || newBudget <= 0) return;
-  userData.budget = newBudget;
-  await updateDoc(doc(db, 'users', currentUser.uid), { budget: newBudget });
-  updateUI();
-};
-
-window.showSettings = () => {
-  document.getElementById('settingsName').value = userData.name || '';
-  document.getElementById('settingsBudget').value = userData.budget || 0;
-  document.getElementById('settingsLang').value = userData.language || 'ar';
-  document.getElementById('settingsCurrency').value = userData.currency || 'EGP';
-  document.getElementById('settingsTheme').value = userData.theme || 'dark';
-  document.getElementById('settingsModal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('settingsModalSheet').classList.add('show'), 10);
-};
-
-window.closeSettings = () => {
-  document.getElementById('settingsModalSheet').classList.remove('show');
-  setTimeout(() => document.getElementById('settingsModal').classList.add('hidden'), 400);
-};
-
-window.saveSettings = async () => {
-  userData.name = document.getElementById('settingsName').value;
-  userData.budget = parseFloat(document.getElementById('settingsBudget').value) || 0;
-  userData.language = document.getElementById('settingsLang').value;
-  userData.currency = document.getElementById('settingsCurrency').value;
-  userData.theme = document.getElementById('settingsTheme').value;
-
-  await updateDoc(doc(db, 'users', currentUser.uid), {
-    name: userData.name,
-    budget: userData.budget,
-    language: userData.language,
-    currency: userData.currency,
-    theme: userData.theme
+    currentUser = user;
+    document.getElementById('welcomeUser').textContent = `أهلاً ${user.displayName || user.email}`;
+    loadTransactions();
   });
 
-  applyLanguage(userData.language);
-  applyTheme(userData.theme);
-  document.getElementById('userName').innerText = userData.name;
-  closeSettings();
-  updateUI();
-};
+  document.getElementById('logoutBtn')?.addEventListener('click', () => signOut(auth));
+  document.getElementById('addTransactionBtn')?.addEventListener('click', addTransaction);
+}
 
-window.subscribe = (plan, duration, price) => {
-  document.getElementById('planDetails').innerText = `${plan} - ${duration === 'month'? 'شهر' : 'سنة'} - ${price} ج.م`;
-  let msg = `مرحبا، حولت ${price}ج لاشتراك Masarefy ${plan} ${duration}. إيميلي: ${currentUser.email}`;
-  document.getElementById('whatsappLink').href = `https://wa.me/201121898023?text=${encodeURIComponent(msg)}`;
-  document.getElementById('paymentModal').classList.remove('hidden');
-};
+async function addTransaction() {
+  const amount = parseFloat(document.getElementById('amountInput').value);
+  const type = document.getElementById('typeInput').value;
+  const category = document.getElementById('categoryInput').value;
+  const note = document.getElementById('noteInput').value;
 
-window.closePayment = () => document.getElementById('paymentModal').classList.add('hidden');
-
-window.askAI = async () => {
-  const today = new Date().toDateString();
-  if (userData.lastQuestionDate!== today) {
-    userData.aiQuestionsToday = 0;
-    userData.lastQuestionDate = today;
-    await updateDoc(doc(db, 'users', currentUser.uid), {
-      aiQuestionsToday: 0,
-      lastQuestionDate: today
-    });
-  }
-
-  let limit = userData.plan === 'Free'? 3 : userData.plan === 'Pro'? 5 : 999;
-  if (userData.aiQuestionsToday >= limit) {
-    alert(`خلصت أسئلتك اليوم (${limit}). رقي حسابك للمزيد`);
-    window.location.href = 'pricing.html';
+  if (!amount || !category) {
+    alert('اكتب المبلغ والفئة');
     return;
   }
 
-  let question = prompt('اسأل المساعد الذكي عن مصاريفك:');
-  if (!question) return;
+  try {
+    await addDoc(collection(db, 'transactions'), {
+      userId: currentUser.uid,
+      amount,
+      type,
+      category,
+      note,
+      createdAt: serverTimestamp()
+    });
+    
+    document.getElementById('amountInput').value = '';
+    document.getElementById('categoryInput').value = '';
+    document.getElementById('noteInput').value = '';
+  } catch (err) {
+    alert('خطأ: ' + err.message);
+  }
+}
 
-  userData.aiQuestionsToday++;
-  await updateDoc(doc(db, 'users', currentUser.uid), {
-    aiQuestionsToday: userData.aiQuestionsToday
+function loadTransactions() {
+  if (unsubscribeTransactions) unsubscribeTransactions();
+  
+  const q = query(collection(db, 'transactions'), where('userId', '==', currentUser.uid));
+  
+  unsubscribeTransactions = onSnapshot(q, (snapshot) => {
+    const transactions = [];
+    snapshot.forEach((doc) => {
+      transactions.push({ id: doc.id, ...doc.data() });
+    });
+    
+    transactions.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    updateUI(transactions);
+    updateChart(transactions);
+  });
+}
+
+function updateUI(transactions) {
+  let income = 0, expenses = 0;
+  const list = document.getElementById('transactionsList');
+  list.innerHTML = '';
+
+  transactions.forEach((t) => {
+    if (t.type === 'income') income += t.amount;
+    else expenses += t.amount;
+
+    const div = document.createElement('div');
+    div.className = 'flex justify-between items-center p-3 bg-slate-800 rounded-xl';
+    div.innerHTML = `
+      <div>
+        <p class="font-bold">${t.category}</p>
+        <p class="text-xs text-slate-400">${t.note || ''}</p>
+      </div>
+      <div class="text-left">
+        <p class="font-bold ${t.type === 'income' ? 'text-emerald-400' : 'text-red-400'}">
+          ${t.type === 'income' ? '+' : '-'}${t.amount} ج.م
+        </p>
+        <button onclick="deleteTransaction('${t.id}')" class="text-xs text-red-500 mt-1">حذف</button>
+      </div>
+    `;
+    list.appendChild(div);
   });
 
-  let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل'? t.amount : -t.amount), 0);
-  let expenses = userData.transactions.filter(t => t.type === 'مصروف');
-  let totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
-  let avgExpense = expenses.length? (totalExpense / expenses.length) : 0;
+  document.getElementById('totalIncome').textContent = `${income.toFixed(2)} ج.م`;
+  document.getElementById('totalExpenses').textContent = `${expenses.toFixed(2)} ج.م`;
+  document.getElementById('currentBalance').textContent = `${(income - expenses).toFixed(2)} ج.م`;
+}
 
-  let answer = `سؤالك: ${question}\n\n`;
-  answer += `📊 تحليل سريع:\n`;
-  answer += `رصيدك: ${balance.toFixed(2)} ج.م\n`;
-  answer += `إجمالي المصروف: ${totalExpense.toFixed(2)} ج.م\n`;
-  answer += `متوسط المصروف: ${avgExpense.toFixed(2)} ج.م\n`;
-  answer += `الميزانية: ${userData.budget.toFixed(2)} ج.م | المتبقي: ${(userData.budget - totalExpense).toFixed(2)} ج.م\n\n`;
-
-  if (userData.budget > 0 && totalExpense > userData.budget * 0.9) {
-    answer += `⚠️ تحذير: قربت تخلص ميزانيتك!\n`;
-  } else if (balance < 0) {
-    answer += `⚠️ تحذير: رصيدك بالسالب! وقف صرف فوراً\n`;
-  } else {
-    answer += `✅ وضعك تمام! كمل كده\n`;
+window.deleteTransaction = async (id) => {
+  if (confirm('متأكد عايز تحذف؟')) {
+    await deleteDoc(doc(db, 'transactions', id));
   }
-
-  if (userData.plan!== 'Max') {
-    answer += `\n⭐️ رقي لـ Max عشان تحليل أعمق + AI حقيقي`;
-  }
-
-  alert(answer);
-  updateUI();
 };
 
-document.addEventListener('DOMContentLoaded', renderEmojis);
-let expenseChart = null;
-
-window.updateChart = (period = 'month') => {
-  const ctx = document.getElementById('expenseChart');
-  if (!ctx ||!userData) return;
-
-  const now = new Date();
-  let filtered = userData.transactions.filter(t => t.type === 'مصروف');
-
-  if (period === 'week') {
-    const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-    filtered = filtered.filter(t => new Date(t.timestamp) > weekAgo);
-  } else if (period === 'month') {
-    const monthAgo = new Date(now.getFullYear(), now.getMonth(), 1);
-    filtered = filtered.filter(t => new Date(t.timestamp) > monthAgo);
-  } else if (period === 'year') {
-    const yearAgo = new Date(now.getFullYear(), 0, 1);
-    filtered = filtered.filter(t => new Date(t.timestamp) > yearAgo);
-  }
-
-  const categoryData = {};
-  filtered.forEach(t => {
-    categoryData[t.category] = (categoryData[t.category] || 0) + t.amount;
+function updateChart(transactions) {
+  const expenses = transactions.filter(t => t.type === 'expense');
+  const byCategory = {};
+  
+  expenses.forEach(t => {
+    byCategory[t.category] = (byCategory[t.category] || 0) + t.amount;
   });
 
-  const labels = Object.keys(categoryData);
-  const data = Object.values(categoryData);
-  const colors = ['#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+  const ctx = document.getElementById('expenseChart');
+  if (!ctx) return;
 
   if (expenseChart) expenseChart.destroy();
-
+  
   expenseChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: labels,
+      labels: Object.keys(byCategory),
       datasets: [{
-        data: data,
-        backgroundColor: colors,
-        borderWidth: 0,
-        hoverOffset: 8
+        data: Object.values(byCategory),
+        backgroundColor: ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899']
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { color: '#f1f5f9', font: { family: 'Cairo', size: 11 }, padding: 10 }
-        }
-      }
+      plugins: { legend: { labels: { color: '#94a3b8' } } }
     }
   });
-
-  document.getElementById('statsCard').classList.remove('hidden');
-};
-
-window.exportPDF = async () => {
-  if (userData.plan === 'Free') {
-    alert('تصدير PDF متاح في خطة Pro و Max فقط ⭐️');
-    window.location.href = 'pricing.html';
-    return;
-  }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  doc.setFontSize(20);
-  doc.text('Masarefy - Financial Report', 105, 20, { align: 'center' });
-
-  doc.setFontSize(12);
-  doc.text(`Name: ${userData.name}`, 20, 35);
-  doc.text(`Email: ${userData.email}`, 20, 42);
-  doc.text(`Date: ${new Date().toLocaleDateString('ar-EG')}`, 20, 49);
-
-  let balance = userData.transactions.reduce((sum, t) => sum + (t.type === 'دخل'? t.amount : -t.amount), 0);
-  let totalExpense = userData.transactions.filter(t => t.type === 'مصروف').reduce((sum, t) => sum + t.amount, 0);
-  let totalIncome = userData.transactions.filter(t => t.type === 'دخل').reduce((sum, t) => sum + t.amount, 0);
-
-  doc.text(`Balance: ${balance.toFixed(2)} EGP`, 20, 60);
-  doc.text(`Total Income: ${totalIncome.toFixed(2)} EGP`, 20, 67);
-  doc.text(`Total Expense: ${totalExpense.toFixed(2)} EGP`, 20, 74);
-  doc.text(`Budget: ${userData.budget.toFixed(2)} EGP`, 20, 81);
-
-  doc.save(`Masarefy-Report-${new Date().toISOString().split('T')[0]}.pdf`);
-  alert('تم تصدير التقرير بنجاح ✅');
-};
-
-function applyLanguage(lang) {
-  const t = translations[lang] || translations.ar;
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (t[key]) el.innerText = t[key];
-  });
-  document.documentElement.lang = lang;
-  document.documentElement.dir = lang === 'ar'? 'rtl' : 'ltr';
-}
-
-function applyTheme(theme) {
-  if (theme === 'light') {
-    document.body.classList.add('light');
-  } else {
-    document.body.classList.remove('light');
-  }
-}
-
-function formatCurrency(amount) {
-  const symbol = currencySymbols[userData.currency] || 'ج.م';
-  return `${amount.toFixed(2)} ${symbol}`;
 }
